@@ -17,25 +17,51 @@ const imageResults = [];
 let videoAssessment = null;
 const imageTasks = [
   { mode: 'single', prompt: '下面哪张图片是开心的？', target: '开心', reason: '重点观察嘴角是否上扬、眼睛是否舒展。', candidates: [
-    { id: 'A', emotion: '开心', url: 'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=700&q=85', alt: '微笑的人物' },
-    { id: 'B', emotion: '悲伤', url: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=700&q=85', alt: '悲伤的人物' }
+    { id: 'A', emotion: '开心', url: '/images/image-q1-a-happy.jpg', alt: '微笑的人物' },
+    { id: 'B', emotion: '悲伤', url: '/images/image-q1-b-sad.jpg', alt: '悲伤的人物' }
   ]},
   { mode: 'multi', prompt: '在这些图片中，哪一张表达了快乐？', target: '开心', reason: '快乐通常表现为嘴角上扬、面部肌肉放松。', candidates: [
-    { id: 'A', emotion: '中性', url: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=500&q=85', alt: '平静的人物' },
-    { id: 'B', emotion: '开心', url: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=500&q=85', alt: '开心的人物' },
-    { id: 'C', emotion: '惊讶', url: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=500&q=85', alt: '惊讶的人物' },
-    { id: 'D', emotion: '愤怒', url: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=500&q=85', alt: '严肃的人物' }
+    { id: 'A', emotion: '中性', url: '/images/image-q2-a-neutral.jpg', alt: '平静的人物' },
+    { id: 'B', emotion: '开心', url: '/images/image-q2-b-happy.jpg', alt: '开心的人物' },
+    { id: 'C', emotion: '惊讶', url: '/images/image-q2-c-surprised.jpg', alt: '惊讶的人物' },
+    { id: 'D', emotion: '愤怒', url: '/images/image-q2-d-angry.jpg', alt: '严肃的人物' }
   ]},
   { mode: 'single', prompt: '下面哪张图片更能体现惊讶情绪？', target: '惊讶', reason: '惊讶时眉毛上扬、眼睛睁大，嘴巴可能张开。', candidates: [
-    { id: 'A', emotion: '惊讶', url: 'https://images.unsplash.com/photo-1551836022-d5d88e9218df?auto=format&fit=crop&w=700&q=85', alt: '惊讶的人物' },
-    { id: 'B', emotion: '中性', url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=700&q=85', alt: '中性的人物' }
+    { id: 'A', emotion: '惊讶', url: '/images/image-q3-a-surprised.jpg', alt: '惊讶的人物' },
+    { id: 'B', emotion: '中性', url: '/images/image-q3-b-neutral.jpg', alt: '中性的人物' }
+  ]},
+  { mode: 'single', prompt: '下面哪张图片是开心的？', target: '开心', reason: '开心时嘴角上扬，眼睛和面部肌肉通常更加舒展。', candidates: [
+    { id: 'A', emotion: '开心', url: '/images/image-q4-a-happy.jpg', alt: '开心的人物' },
+    { id: 'B', emotion: '中性', url: '/images/image-q4-b-neutral.jpg', alt: '中性的人物' }
+  ]},
+  { mode: 'single', prompt: '下面哪张图片表现了悲伤？', target: '悲伤', reason: '悲伤时嘴角可能下垂，眉毛内侧上扬，整体表情较低落。', candidates: [
+    { id: 'A', emotion: '悲伤', url: '/images/image-q5-a-sad.jpg', alt: '悲伤的人物' },
+    { id: 'B', emotion: '开心', url: '/images/image-q5-b-happy.png', alt: '开心的人物' }
+  ]},
+  { mode: 'single', prompt: '下面哪张图片更能体现惊讶情绪？', target: '惊讶', reason: '惊讶时眉毛上扬、眼睛睁大，嘴巴可能张开。', candidates: [
+    { id: 'A', emotion: '惊讶', url: '/images/image-q6-a-surprised.jpg', alt: '惊讶的人物' },
+    { id: 'B', emotion: '中性', url: '/images/image-q6-b-neutral.jpg', alt: '中性的人物' }
+  ]},
+  { mode: 'single', prompt: '下面哪张图片表现了愤怒？', target: '愤怒', reason: '愤怒时眉毛收紧，眼神更集中，嘴唇和下颌可能变得紧绷。', candidates: [
+    { id: 'A', emotion: '愤怒', url: '/images/image-q7-a-angry.png', alt: '愤怒的人物' },
+    { id: 'B', emotion: '中性', url: '/images/image-q7-b-neutral.png', alt: '中性的人物' }
+  ]},
+  { mode: 'single', prompt: '下面哪张图片表现了中性情绪？', target: '中性', reason: '中性表情通常面部肌肉放松，没有明显的情绪动作。', candidates: [
+    { id: 'A', emotion: '中性', url: '/images/image-q8-a-neutral.png', alt: '中性的人物' },
+    { id: 'B', emotion: '开心', url: '/images/image-q8-b-happy.png', alt: '开心的人物' }
   ]}
-];
+ ];
+
+api('/api/tasks/image').then(payload => {
+  if (!payload?.tasks) return;
+  imageTasks.splice(0, imageTasks.length, ...payload.tasks.map(task => ({ ...task, candidates: task.options })));
+  renderImageTask();
+});
 
 function updateScoreSummary() {
-  const singles = imageResults.filter(item => item.mode === 'single');
-  const multis = imageResults.filter(item => item.mode === 'multi');
-  const imageScore = imageResults.length ? Math.round(imageResults.filter(item => item.correct).length / imageResults.length * 100) : 0;
+  const singles = imageResults.filter(item => item.mode === 'two-choice');
+  const multis = imageResults.filter(item => item.mode === 'three-choice');
+  const imageScore = imageResults.length ? Math.round(imageResults.reduce((sum, item) => sum + (item.correct ? item.points : 0), 0) / 20 * 100) : 0;
   const singleScore = singles.length ? Math.round(singles.filter(item => item.correct).length / singles.length * 100) : 0;
   const multiScore = multis.length ? Math.round(multis.filter(item => item.correct).length / multis.length * 100) : 0;
   const videoScore = videoAssessment ? Math.round((videoAssessment.confidence || 0) * 100) : 0;
@@ -56,7 +82,7 @@ function renderImageTask() {
   document.getElementById('image-index').textContent = imageTaskIndex + 1;
   document.getElementById('image-prompt').textContent = task.prompt;
   const candidates = document.getElementById('image-candidates');
-  candidates.className = `image-candidates ${task.mode === 'multi' ? 'multi' : 'single'}`;
+  candidates.className = `image-candidates ${task.mode === 'three-choice' ? 'multi' : 'single'}`;
   candidates.innerHTML = task.candidates.map(candidate => `<button class="image-candidate" data-option="${candidate.id}" aria-label="选项 ${candidate.id}"><img src="${candidate.url}" alt="${candidate.alt}" /><span>${candidate.id}</span></button>`).join('');
   selectedEmotion = '';
 }
@@ -94,10 +120,10 @@ document.getElementById('confirm-image').addEventListener('click', async () => {
   const task = imageTasks[imageTaskIndex];
   const result = await api('/api/answers/image', {
     method: 'POST',
-    body: JSON.stringify({ taskId: `image-q${imageTaskIndex + 1}`, optionId: selectedEmotion === task.candidates.find(candidate => candidate.emotion === task.target)?.id ? 'A' : 'B' })
+    body: JSON.stringify({ taskId: task.id || `image-q${imageTaskIndex + 1}`, optionId: selectedEmotion })
   });
   const isCorrect = selectedEmotion === task.candidates.find(candidate => candidate.emotion === task.target)?.id;
-  imageResults.push({ mode: task.mode, emotion: task.target, correct: isCorrect });
+  imageResults.push({ mode: task.mode, emotion: task.target, correct: isCorrect, points: task.points || (task.candidates.length === 3 ? 1.5 : 1) });
   updateScoreSummary();
   document.getElementById('image-feedback').textContent = isCorrect ? `判断正确！${task.reason}` : `再观察一下。${task.reason}`;
   if (imageTaskIndex < imageTasks.length - 1) {

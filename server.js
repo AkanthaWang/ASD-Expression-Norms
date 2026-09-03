@@ -5,6 +5,7 @@ const path = require('path');
 const PORT = Number(process.env.PORT || 5173);
 const ROOT = __dirname;
 const FRONTEND_ROOT = path.join(ROOT, 'frontend');
+const IMAGE_ROOT = path.join(ROOT, 'data', 'images');
 const state = {
   session: {
     id: 'demo-session-001',
@@ -23,8 +24,8 @@ const imageTask = {
   prompt: '下面哪张图片是开心的？',
   correctOption: 'A',
   options: [
-    { id: 'A', label: 'A', imageUrl: 'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=700&q=85', alt: '选项A人物表情' },
-    { id: 'B', label: 'B', imageUrl: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=700&q=85', alt: '选项B人物表情' },
+    { id: 'A', label: 'A', imageUrl: '/images/image-q1-a-happy.jpg', alt: '选项A人物表情' },
+    { id: 'B', label: 'B', imageUrl: '/images/image-q1-b-sad.jpg', alt: '选项B人物表情' },
   ],
 };
 
@@ -88,9 +89,11 @@ async function handleApi(req, res, url) {
 
 function serveStatic(res, pathname) {
   const requested = pathname === '/' ? '/index.html' : pathname;
-  const filePath = path.resolve(FRONTEND_ROOT, `.${requested}`);
-  if (!filePath.startsWith(FRONTEND_ROOT) || !fs.existsSync(filePath) || fs.statSync(filePath).isDirectory()) return sendJson(res, 404, { error: 'Not found' });
-  const types = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8' };
+  const root = requested.startsWith('/images/') ? IMAGE_ROOT : FRONTEND_ROOT;
+  const relative = requested.startsWith('/images/') ? requested.slice('/images'.length) : requested;
+  const filePath = path.resolve(root, '.' + relative);
+  if (!filePath.startsWith(root) || !fs.existsSync(filePath) || fs.statSync(filePath).isDirectory()) return sendJson(res, 404, { error: 'Not found' });
+  const types = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.png': 'image/png', '.webp': 'image/webp' };
   res.writeHead(200, { 'Content-Type': types[path.extname(filePath)] || 'application/octet-stream' });
   fs.createReadStream(filePath).pipe(res);
 }

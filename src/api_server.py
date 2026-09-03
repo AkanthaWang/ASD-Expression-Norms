@@ -6,12 +6,13 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 from src.evaluation.scoring import build_report
-from src.image_task.tasks import IMAGE_TASK, validate_answer
+from src.image_task.tasks import IMAGE_TASK, IMAGE_TASKS, validate_answer
 from src.report.generator import generate_report
 from src.video_task.analyzer import analyze_video
 
 ROOT = Path(__file__).resolve().parents[1]
 FRONTEND_ROOT = ROOT / "frontend"
+IMAGE_ROOT = ROOT / "data" / "images"
 PORT = int(os.getenv("PORT", "5173"))
 SESSION = {"id": "demo-session-001", "childName": "乐乐小朋友", "status": "进行中", "completed": 1, "total": 4}
 ANSWERS: list[dict] = []
@@ -50,7 +51,7 @@ class Handler(BaseHTTPRequestHandler):
         route = urlparse(self.path).path
         if route == "/api/health": return self.json_response(200, {"ok": True, "service": "expression-norms-api", "version": "1.0.0"})
         if route == "/api/session": return self.json_response(200, SESSION)
-        if route == "/api/tasks/image": return self.json_response(200, IMAGE_TASK)
+        if route == "/api/tasks/image": return self.json_response(200, {"tasks": IMAGE_TASKS, "total": len(IMAGE_TASKS), "maxScore": 20})
         if route == "/api/video/sample": return self.json_response(200, analyze_video())
         if route == "/api/report": return self.json_response(200, generate_report(SESSION["id"], ANSWERS))
         self.serve_static(route)
@@ -60,7 +61,7 @@ class Handler(BaseHTTPRequestHandler):
         try:
             body = self.read_body()
             if route == "/api/answers/image":
-                answer = validate_answer(body.get("optionId"))
+                answer = validate_answer(body.get("optionId"), body.get("taskId", "image-q1"))
                 ANSWERS.append({**answer, "answeredAt": "server-time"})
                 return self.json_response(200, answer)
             if route == "/api/video/analyze": return self.json_response(200, analyze_video(body.get("fileName")))
@@ -73,8 +74,10 @@ class Handler(BaseHTTPRequestHandler):
 
     def serve_static(self, route: str):
         relative = "index.html" if route == "/" else route.lstrip("/")
-        target = (FRONTEND_ROOT / relative).resolve()
-        if FRONTEND_ROOT not in target.parents and target != FRONTEND_ROOT or not target.is_file():
+        root = IMAGE_ROOT if route.startswith("/images/") else FRONTEND_ROOT
+        relative = route[len("/images/"):] if route.startswith("/images/") else relative
+        target = (root / relative).resolve()
+        if root not in target.parents and target != root or not target.is_file():
             return self.json_response(404, {"error": "Not found"})
         content_type = mimetypes.guess_type(target.name)[0] or "application/octet-stream"
         self.send_response(200)
