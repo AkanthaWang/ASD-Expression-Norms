@@ -147,7 +147,6 @@ function renderVideoTask() {
   source.src = `/media/videos/${task.fileName}`;
   document.getElementById('task-video').load();
   document.getElementById('task-video').currentTime = 0;
-  document.getElementById('video-result').hidden = true;
   document.getElementById('confirm-video').textContent = '开始播放并捕捉表情　→';
   document.getElementById('video-state').textContent = '准备好后开始播放并捕捉面部表情';
 }
@@ -224,7 +223,6 @@ document.getElementById('confirm-video').addEventListener('click', async () => {
   const button = document.getElementById('confirm-video');
   const task = videoTasks[videoTaskIndex];
   const state = document.getElementById('video-state');
-  const resultPanel = document.getElementById('video-result');
   const taskVideo = document.getElementById('task-video');
   button.disabled = true;
   state.textContent = '正在启动后台分析…';
@@ -260,13 +258,7 @@ document.getElementById('confirm-video').addEventListener('click', async () => {
     const isCorrect = analysis.isCorrect ?? analysis.emotion === task.target;
     videoResults[videoTaskIndex] = { correct: isCorrect, emotion: analysis.emotion, confidence: analysis.confidence };
     updateScoreSummary();
-    document.getElementById('video-emotion').textContent = analysis.emotion;
-    document.getElementById('video-confidence').textContent = `${Math.round((analysis.confidence || 0) * 100)}% 置信度`;
-    document.getElementById('video-features').innerHTML = (analysis.features || []).map(feature => `<li>${feature}</li>`).join('');
-    document.getElementById('video-explanation').textContent = analysis.explanation || '面部动作模式与该情绪表达相符。';
-    document.getElementById('video-timeline').textContent = '0–2 秒：表情逐渐形成；2–6 秒：情绪保持稳定；整体未发现明显情绪转折。';
-    state.textContent = isCorrect ? '本题分析完成，获得 2 分' : '本题分析完成，本题未得分';
-    resultPanel.hidden = false;
+    state.textContent = '本题分析完成，结果已计入最终报告';
     button.disabled = false;
     button.textContent = videoTaskIndex < videoTasks.length - 1 ? '继续下一题　→' : '视频任务已完成';
     document.getElementById('continue-image').hidden = isImageComplete();
