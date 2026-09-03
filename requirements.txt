@@ -1,0 +1,2 @@
+# The reference backend uses only Python 3.10+ standard-library modules.
+# Add model/runtime dependencies here when integrating a production model.

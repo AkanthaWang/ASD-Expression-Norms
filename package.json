@@ -1,0 +1,11 @@
+{
+  "name": "asd-expression-norms",
+  "version": "1.0.0",
+  "private": true,
+  "description": "孤独症儿童表情识别常模评估网页与数据接口",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "engines": { "node": ">=18" }
+}

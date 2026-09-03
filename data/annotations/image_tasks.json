@@ -1,0 +1,6 @@
+{
+  "version": "demo-1.0",
+  "tasks": [
+    {"id": "image-q1", "emotion": "开心", "correctOption": "A", "source": "demo-image-task"}
+  ]
+}
