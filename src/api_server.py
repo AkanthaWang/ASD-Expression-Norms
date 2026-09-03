@@ -85,7 +85,7 @@ class Handler(BaseHTTPRequestHandler):
         if route == "/api/health": return self.json_response(200, {"ok": True, "service": "expression-norms-api", "version": "1.0.0"})
         if route == "/api/session": return self.json_response(200, SESSION)
         if route == "/api/tasks/image": return self.json_response(200, {"version": "demo-2.1", "total": len(IMAGE_TASKS), "tasks": IMAGE_TASKS})
-        if route == "/api/video/sample": return self.json_response(200, analyze_video("happy-1.mp4"))
+        if route == "/api/video/sample": return self.json_response(200, analyze_video("happy-1.mp4", "开心"))
         if route == "/api/report":
             if SESSION["completed"] < SESSION["total"]:
                 return self.json_response(409, {"error": "请完成全部图片和视频测试后再生成最终报告"})
@@ -119,7 +119,7 @@ class Handler(BaseHTTPRequestHandler):
                 task = VIDEO_TASKS.get(body.get("taskId"))
                 if not task:
                     raise ValueError("invalid video task")
-                analysis = analyze_video(task["fileName"])
+                analysis = analyze_video(task["fileName"], task["target"])
                 correct = analysis["emotion"] == task["target"]
                 answer = {"taskId": body["taskId"], "isCorrect": correct, "points": 2, "emotion": analysis["emotion"], "answeredAt": "server-time"}
                 upsert_answer(VIDEO_ANSWERS, answer)
