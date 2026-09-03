@@ -13,6 +13,7 @@ from src.video_task.analyzer import analyze_video
 ROOT = Path(__file__).resolve().parents[1]
 FRONTEND_ROOT = ROOT / "frontend"
 IMAGE_ROOT = ROOT / "data" / "images"
+VIDEO_ROOT = ROOT / "data" / "videos"
 PORT = int(os.getenv("PORT", "5173"))
 SESSION = {"id": "demo-session-001", "childName": "乐乐小朋友", "status": "进行中", "completed": 1, "total": 4}
 ANSWERS: list[dict] = []
@@ -74,8 +75,8 @@ class Handler(BaseHTTPRequestHandler):
 
     def serve_static(self, route: str):
         relative = "index.html" if route == "/" else route.lstrip("/")
-        root = IMAGE_ROOT if route.startswith("/images/") else FRONTEND_ROOT
-        relative = route[len("/images/"):] if route.startswith("/images/") else relative
+        root = IMAGE_ROOT if route.startswith("/images/") else VIDEO_ROOT if route.startswith("/videos/") else FRONTEND_ROOT
+        relative = route[len("/images/"):] if route.startswith("/images/") else route[len("/videos/"):] if route.startswith("/videos/") else relative
         target = (root / relative).resolve()
         if root not in target.parents and target != root or not target.is_file():
             return self.json_response(404, {"error": "Not found"})

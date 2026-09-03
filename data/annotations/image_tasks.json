@@ -1,6 +1,474 @@
-{
-  "version": "demo-1.0",
-  "tasks": [
-    {"id": "image-q1", "emotion": "开心", "correctOption": "A", "source": "demo-image-task"}
-  ]
-}
+[
+  {
+    "id": "image-q1",
+    "type": "two-choice",
+    "mode": "two-choice",
+    "points": 1,
+    "emotion": "开心",
+    "prompt": "下面哪张图片最能表现开心情绪？",
+    "reason": "请观察眼睛、眉毛、嘴角和整体面部状态，判断开心情绪。",
+    "correctOption": "A",
+    "options": [
+      {
+        "id": "A",
+        "label": "A",
+        "emotion": "开心",
+        "imageUrl": "/images/q01-a-happy.jpg",
+        "alt": "开心表情"
+      },
+      {
+        "id": "B",
+        "label": "B",
+        "emotion": "伤心",
+        "imageUrl": "/images/q01-b-sad.jpg",
+        "alt": "伤心表情"
+      }
+    ]
+  },
+  {
+    "id": "image-q2",
+    "type": "two-choice",
+    "mode": "two-choice",
+    "points": 1,
+    "emotion": "伤心",
+    "prompt": "下面哪张图片最能表现伤心情绪？",
+    "reason": "请观察眼睛、眉毛、嘴角和整体面部状态，判断伤心情绪。",
+    "correctOption": "A",
+    "options": [
+      {
+        "id": "A",
+        "label": "A",
+        "emotion": "伤心",
+        "imageUrl": "/images/q02-a-sad.jpg",
+        "alt": "伤心表情"
+      },
+      {
+        "id": "B",
+        "label": "B",
+        "emotion": "害怕",
+        "imageUrl": "/images/q02-b-fear.jpg",
+        "alt": "害怕表情"
+      }
+    ]
+  },
+  {
+    "id": "image-q3",
+    "type": "two-choice",
+    "mode": "two-choice",
+    "points": 1,
+    "emotion": "害怕",
+    "prompt": "下面哪张图片最能表现害怕情绪？",
+    "reason": "请观察眼睛、眉毛、嘴角和整体面部状态，判断害怕情绪。",
+    "correctOption": "A",
+    "options": [
+      {
+        "id": "A",
+        "label": "A",
+        "emotion": "害怕",
+        "imageUrl": "/images/q03-a-fear.jpg",
+        "alt": "害怕表情"
+      },
+      {
+        "id": "B",
+        "label": "B",
+        "emotion": "开心",
+        "imageUrl": "/images/q03-b-happy.jpg",
+        "alt": "开心表情"
+      }
+    ]
+  },
+  {
+    "id": "image-q4",
+    "type": "two-choice",
+    "mode": "two-choice",
+    "points": 1,
+    "emotion": "开心",
+    "prompt": "下面哪张图片最能表现开心情绪？",
+    "reason": "请观察眼睛、眉毛、嘴角和整体面部状态，判断开心情绪。",
+    "correctOption": "A",
+    "options": [
+      {
+        "id": "A",
+        "label": "A",
+        "emotion": "开心",
+        "imageUrl": "/images/q04-a-happy.jpg",
+        "alt": "开心表情"
+      },
+      {
+        "id": "B",
+        "label": "B",
+        "emotion": "害怕",
+        "imageUrl": "/images/q04-b-fear.png",
+        "alt": "害怕表情"
+      }
+    ]
+  },
+  {
+    "id": "image-q5",
+    "type": "two-choice",
+    "mode": "two-choice",
+    "points": 1,
+    "emotion": "伤心",
+    "prompt": "下面哪张图片最能表现伤心情绪？",
+    "reason": "请观察眼睛、眉毛、嘴角和整体面部状态，判断伤心情绪。",
+    "correctOption": "A",
+    "options": [
+      {
+        "id": "A",
+        "label": "A",
+        "emotion": "伤心",
+        "imageUrl": "/images/q05-a-sad.jpg",
+        "alt": "伤心表情"
+      },
+      {
+        "id": "B",
+        "label": "B",
+        "emotion": "开心",
+        "imageUrl": "/images/q05-b-happy.jpg",
+        "alt": "开心表情"
+      }
+    ]
+  },
+  {
+    "id": "image-q6",
+    "type": "two-choice",
+    "mode": "two-choice",
+    "points": 1,
+    "emotion": "害怕",
+    "prompt": "下面哪张图片最能表现害怕情绪？",
+    "reason": "请观察眼睛、眉毛、嘴角和整体面部状态，判断害怕情绪。",
+    "correctOption": "A",
+    "options": [
+      {
+        "id": "A",
+        "label": "A",
+        "emotion": "害怕",
+        "imageUrl": "/images/q06-a-fear.jpg",
+        "alt": "害怕表情"
+      },
+      {
+        "id": "B",
+        "label": "B",
+        "emotion": "伤心",
+        "imageUrl": "/images/q06-b-sad.jpg",
+        "alt": "伤心表情"
+      }
+    ]
+  },
+  {
+    "id": "image-q7",
+    "type": "two-choice",
+    "mode": "two-choice",
+    "points": 1,
+    "emotion": "开心",
+    "prompt": "下面哪张图片最能表现开心情绪？",
+    "reason": "请观察眼睛、眉毛、嘴角和整体面部状态，判断开心情绪。",
+    "correctOption": "A",
+    "options": [
+      {
+        "id": "A",
+        "label": "A",
+        "emotion": "开心",
+        "imageUrl": "/images/q07-a-happy.jpg",
+        "alt": "开心表情"
+      },
+      {
+        "id": "B",
+        "label": "B",
+        "emotion": "害怕",
+        "imageUrl": "/images/q07-b-fear.jpg",
+        "alt": "害怕表情"
+      }
+    ]
+  },
+  {
+    "id": "image-q8",
+    "type": "two-choice",
+    "mode": "two-choice",
+    "points": 1,
+    "emotion": "伤心",
+    "prompt": "下面哪张图片最能表现伤心情绪？",
+    "reason": "请观察眼睛、眉毛、嘴角和整体面部状态，判断伤心情绪。",
+    "correctOption": "A",
+    "options": [
+      {
+        "id": "A",
+        "label": "A",
+        "emotion": "伤心",
+        "imageUrl": "/images/q08-a-sad.png",
+        "alt": "伤心表情"
+      },
+      {
+        "id": "B",
+        "label": "B",
+        "emotion": "开心",
+        "imageUrl": "/images/q08-b-happy.jpg",
+        "alt": "开心表情"
+      }
+    ]
+  },
+  {
+    "id": "image-q9",
+    "type": "three-choice",
+    "mode": "three-choice",
+    "points": 1.5,
+    "emotion": "开心",
+    "prompt": "下面哪张图片最能表现开心情绪？",
+    "reason": "请观察眼睛、眉毛、嘴角和整体面部状态，判断开心情绪。",
+    "correctOption": "A",
+    "options": [
+      {
+        "id": "A",
+        "label": "A",
+        "emotion": "开心",
+        "imageUrl": "/images/q09-a-happy.jpg",
+        "alt": "开心表情"
+      },
+      {
+        "id": "B",
+        "label": "B",
+        "emotion": "伤心",
+        "imageUrl": "/images/q09-b-sad.png",
+        "alt": "伤心表情"
+      },
+      {
+        "id": "C",
+        "label": "C",
+        "emotion": "害怕",
+        "imageUrl": "/images/q09-c-fear.png",
+        "alt": "害怕表情"
+      }
+    ]
+  },
+  {
+    "id": "image-q10",
+    "type": "three-choice",
+    "mode": "three-choice",
+    "points": 1.5,
+    "emotion": "伤心",
+    "prompt": "下面哪张图片最能表现伤心情绪？",
+    "reason": "请观察眼睛、眉毛、嘴角和整体面部状态，判断伤心情绪。",
+    "correctOption": "A",
+    "options": [
+      {
+        "id": "A",
+        "label": "A",
+        "emotion": "伤心",
+        "imageUrl": "/images/q10-a-sad.png",
+        "alt": "伤心表情"
+      },
+      {
+        "id": "B",
+        "label": "B",
+        "emotion": "害怕",
+        "imageUrl": "/images/q10-b-fear.jpg",
+        "alt": "害怕表情"
+      },
+      {
+        "id": "C",
+        "label": "C",
+        "emotion": "开心",
+        "imageUrl": "/images/q10-c-happy.jpg",
+        "alt": "开心表情"
+      }
+    ]
+  },
+  {
+    "id": "image-q11",
+    "type": "three-choice",
+    "mode": "three-choice",
+    "points": 1.5,
+    "emotion": "害怕",
+    "prompt": "下面哪张图片最能表现害怕情绪？",
+    "reason": "请观察眼睛、眉毛、嘴角和整体面部状态，判断害怕情绪。",
+    "correctOption": "A",
+    "options": [
+      {
+        "id": "A",
+        "label": "A",
+        "emotion": "害怕",
+        "imageUrl": "/images/q11-a-fear.jpg",
+        "alt": "害怕表情"
+      },
+      {
+        "id": "B",
+        "label": "B",
+        "emotion": "开心",
+        "imageUrl": "/images/q11-b-happy.jpg",
+        "alt": "开心表情"
+      },
+      {
+        "id": "C",
+        "label": "C",
+        "emotion": "伤心",
+        "imageUrl": "/images/q11-c-sad.jpg",
+        "alt": "伤心表情"
+      }
+    ]
+  },
+  {
+    "id": "image-q12",
+    "type": "three-choice",
+    "mode": "three-choice",
+    "points": 1.5,
+    "emotion": "开心",
+    "prompt": "下面哪张图片最能表现开心情绪？",
+    "reason": "请观察眼睛、眉毛、嘴角和整体面部状态，判断开心情绪。",
+    "correctOption": "A",
+    "options": [
+      {
+        "id": "A",
+        "label": "A",
+        "emotion": "开心",
+        "imageUrl": "/images/q12-a-happy.jpg",
+        "alt": "开心表情"
+      },
+      {
+        "id": "B",
+        "label": "B",
+        "emotion": "伤心",
+        "imageUrl": "/images/q12-b-sad.jpg",
+        "alt": "伤心表情"
+      },
+      {
+        "id": "C",
+        "label": "C",
+        "emotion": "害怕",
+        "imageUrl": "/images/q12-c-fear.jpg",
+        "alt": "害怕表情"
+      }
+    ]
+  },
+  {
+    "id": "image-q13",
+    "type": "three-choice",
+    "mode": "three-choice",
+    "points": 1.5,
+    "emotion": "伤心",
+    "prompt": "下面哪张图片最能表现伤心情绪？",
+    "reason": "请观察眼睛、眉毛、嘴角和整体面部状态，判断伤心情绪。",
+    "correctOption": "A",
+    "options": [
+      {
+        "id": "A",
+        "label": "A",
+        "emotion": "伤心",
+        "imageUrl": "/images/q13-a-sad.jpg",
+        "alt": "伤心表情"
+      },
+      {
+        "id": "B",
+        "label": "B",
+        "emotion": "害怕",
+        "imageUrl": "/images/q13-b-fear.jpg",
+        "alt": "害怕表情"
+      },
+      {
+        "id": "C",
+        "label": "C",
+        "emotion": "开心",
+        "imageUrl": "/images/q13-c-happy.jpg",
+        "alt": "开心表情"
+      }
+    ]
+  },
+  {
+    "id": "image-q14",
+    "type": "three-choice",
+    "mode": "three-choice",
+    "points": 1.5,
+    "emotion": "害怕",
+    "prompt": "下面哪张图片最能表现害怕情绪？",
+    "reason": "请观察眼睛、眉毛、嘴角和整体面部状态，判断害怕情绪。",
+    "correctOption": "A",
+    "options": [
+      {
+        "id": "A",
+        "label": "A",
+        "emotion": "害怕",
+        "imageUrl": "/images/q14-a-fear.jpg",
+        "alt": "害怕表情"
+      },
+      {
+        "id": "B",
+        "label": "B",
+        "emotion": "开心",
+        "imageUrl": "/images/q14-b-happy.jpg",
+        "alt": "开心表情"
+      },
+      {
+        "id": "C",
+        "label": "C",
+        "emotion": "伤心",
+        "imageUrl": "/images/q14-c-sad.jpg",
+        "alt": "伤心表情"
+      }
+    ]
+  },
+  {
+    "id": "image-q15",
+    "type": "three-choice",
+    "mode": "three-choice",
+    "points": 1.5,
+    "emotion": "开心",
+    "prompt": "下面哪张图片最能表现开心情绪？",
+    "reason": "请观察眼睛、眉毛、嘴角和整体面部状态，判断开心情绪。",
+    "correctOption": "A",
+    "options": [
+      {
+        "id": "A",
+        "label": "A",
+        "emotion": "开心",
+        "imageUrl": "/images/q15-a-happy.jpg",
+        "alt": "开心表情"
+      },
+      {
+        "id": "B",
+        "label": "B",
+        "emotion": "伤心",
+        "imageUrl": "/images/q15-b-sad.jpg",
+        "alt": "伤心表情"
+      },
+      {
+        "id": "C",
+        "label": "C",
+        "emotion": "害怕",
+        "imageUrl": "/images/q15-c-fear.jpg",
+        "alt": "害怕表情"
+      }
+    ]
+  },
+  {
+    "id": "image-q16",
+    "type": "three-choice",
+    "mode": "three-choice",
+    "points": 1.5,
+    "emotion": "伤心",
+    "prompt": "下面哪张图片最能表现伤心情绪？",
+    "reason": "请观察眼睛、眉毛、嘴角和整体面部状态，判断伤心情绪。",
+    "correctOption": "A",
+    "options": [
+      {
+        "id": "A",
+        "label": "A",
+        "emotion": "伤心",
+        "imageUrl": "/images/q16-a-sad.jpg",
+        "alt": "伤心表情"
+      },
+      {
+        "id": "B",
+        "label": "B",
+        "emotion": "害怕",
+        "imageUrl": "/images/q16-b-fear.jpg",
+        "alt": "害怕表情"
+      },
+      {
+        "id": "C",
+        "label": "C",
+        "emotion": "开心",
+        "imageUrl": "/images/q16-c-happy.jpg",
+        "alt": "开心表情"
+      }
+    ]
+  }
+]

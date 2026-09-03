@@ -6,6 +6,9 @@ const PORT = Number(process.env.PORT || 5173);
 const ROOT = __dirname;
 const FRONTEND_ROOT = path.join(ROOT, 'frontend');
 const IMAGE_ROOT = path.join(ROOT, 'data', 'images');
+const VIDEO_ROOT = path.join(ROOT, 'data', 'videos');
+const imageTasks = JSON.parse(fs.readFileSync(path.join(ROOT, 'data', 'annotations', 'image_tasks.json'), 'utf8'));
+const imageTask = imageTasks[0];
 const state = {
   session: {
     id: 'demo-session-001',
@@ -17,17 +20,6 @@ const state = {
   imageAnswers: [],
 };
 
-const imageTask = {
-  id: 'image-q1',
-  type: 'single-choice',
-  emotion: '开心',
-  prompt: '下面哪张图片是开心的？',
-  correctOption: 'A',
-  options: [
-    { id: 'A', label: 'A', imageUrl: '/images/image-q1-a-happy.jpg', alt: '选项A人物表情' },
-    { id: 'B', label: 'B', imageUrl: '/images/image-q1-b-sad.jpg', alt: '选项B人物表情' },
-  ],
-};
 
 const videoAnalysis = {
   emotion: '开心', confidence: 0.87,
@@ -70,16 +62,18 @@ function report() {
 async function handleApi(req, res, url) {
   if (req.method === 'GET' && url.pathname === '/api/health') return sendJson(res, 200, { ok: true, service: 'expression-norms-api', version: '1.0.0' });
   if (req.method === 'GET' && url.pathname === '/api/session') return sendJson(res, 200, state.session);
-  if (req.method === 'GET' && url.pathname === '/api/tasks/image') return sendJson(res, 200, imageTask);
+  if (req.method === 'GET' && url.pathname === '/api/tasks/image') return sendJson(res, 200, { tasks: imageTasks, total: imageTasks.length, maxScore: 20 });
   if (req.method === 'GET' && url.pathname === '/api/video/sample') return sendJson(res, 200, videoAnalysis);
   if (req.method === 'GET' && url.pathname === '/api/report') return sendJson(res, 200, report());
   if (req.method === 'POST' && url.pathname === '/api/answers/image') {
     try {
       const body = await readJson(req);
-      if (!['A', 'B'].includes(body.optionId)) return sendJson(res, 400, { error: 'optionId must be A or B' });
-      const isCorrect = body.optionId === imageTask.correctOption;
-      state.imageAnswers.push({ taskId: imageTask.id, optionId: body.optionId, isCorrect, answeredAt: new Date().toISOString() });
-      return sendJson(res, 200, { taskId: imageTask.id, optionId: body.optionId, isCorrect, score: isCorrect ? 100 : 0, feedback: isCorrect ? '答对啦！这张图片里的表情更开心。' : '再观察一下嘴角和眼睛的变化吧。' });
+      const task = imageTasks.find(item => item.id === body.taskId) || imageTask;
+      if (!task.options.some(item => item.id === body.optionId)) return sendJson(res, 400, { error: 'invalid optionId' });
+      const isCorrect = body.optionId === task.correctOption;
+      const score = isCorrect ? task.points : 0;
+      state.imageAnswers.push({ taskId: task.id, optionId: body.optionId, isCorrect, score, answeredAt: new Date().toISOString() });
+      return sendJson(res, 200, { taskId: task.id, optionId: body.optionId, isCorrect, score, points: task.points, feedback: isCorrect ? '答对啦！这张图片符合目标情绪。' : '再观察一下眼睛、眉毛和嘴角的变化吧。' });
     } catch (error) { return sendJson(res, 400, { error: error.message }); }
   }
   if (req.method === 'POST' && url.pathname === '/api/video/analyze') return sendJson(res, 200, { ...videoAnalysis, source: 'demo-model', fileName: (await readJson(req).catch(() => ({}))).fileName || null });
@@ -89,11 +83,11 @@ async function handleApi(req, res, url) {
 
 function serveStatic(res, pathname) {
   const requested = pathname === '/' ? '/index.html' : pathname;
-  const root = requested.startsWith('/images/') ? IMAGE_ROOT : FRONTEND_ROOT;
-  const relative = requested.startsWith('/images/') ? requested.slice('/images'.length) : requested;
+  const root = requested.startsWith('/images/') ? IMAGE_ROOT : requested.startsWith('/videos/') ? VIDEO_ROOT : FRONTEND_ROOT;
+  const relative = requested.startsWith('/images/') ? requested.slice('/images'.length) : requested.startsWith('/videos/') ? requested.slice('/videos'.length) : requested;
   const filePath = path.resolve(root, '.' + relative);
   if (!filePath.startsWith(root) || !fs.existsSync(filePath) || fs.statSync(filePath).isDirectory()) return sendJson(res, 404, { error: 'Not found' });
-  const types = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.png': 'image/png', '.webp': 'image/webp' };
+  const types = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.png': 'image/png', '.webp': 'image/webp', '.mp4': 'video/mp4', '.webm': 'video/webm' };
   res.writeHead(200, { 'Content-Type': types[path.extname(filePath)] || 'application/octet-stream' });
   fs.createReadStream(filePath).pipe(res);
 }
