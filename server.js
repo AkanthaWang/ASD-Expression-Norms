@@ -6,27 +6,88 @@ const PORT = Number(process.env.PORT || 5173);
 const ROOT = __dirname;
 const FRONTEND_ROOT = path.join(ROOT, 'frontend');
 const IMAGE_ROOT = path.join(ROOT, 'data', 'images');
-const VIDEO_ROOT = path.join(ROOT, 'data', 'videos');
-const imageTasks = JSON.parse(fs.readFileSync(path.join(ROOT, 'data', 'annotations', 'image_tasks.json'), 'utf8'));
-const imageTask = imageTasks[0];
+const VIDEO_FILES = {
+  'happy-1.mp4': path.join(ROOT, 'data', 'videos', 'happy', 'happy_1.mp4'),
+  'sad-1.mp4': path.join(ROOT, 'data', 'videos', 'sad', 'sad_1.mp4'),
+  'fear-1.mp4': path.join(ROOT, 'data', 'videos', 'fear', 'fear_1.mp4'),
+  'happy-2.mp4': path.join(ROOT, 'data', 'videos', 'happy', 'happy_2.mp4'),
+  'sad-2.mp4': path.join(ROOT, 'data', 'videos', 'sad', 'sad_2.mp4'),
+};
+const IMAGE_TASK_COUNT = 16;
+const VIDEO_TASK_COUNT = 5;
+const VIDEO_TASKS = {
+  'video-q1': { fileName: 'happy-1.mp4', target: '开心' },
+  'video-q2': { fileName: 'sad-1.mp4', target: '难过' },
+  'video-q3': { fileName: 'fear-1.mp4', target: '恐惧' },
+  'video-q4': { fileName: 'happy-2.mp4', target: '开心' },
+  'video-q5': { fileName: 'sad-2.mp4', target: '难过' },
+};
 const state = {
   session: {
     id: 'demo-session-001',
     childName: '乐乐小朋友',
     status: '进行中',
-    completed: 1,
-    total: 4,
+    completed: 0,
+    total: IMAGE_TASK_COUNT + VIDEO_TASK_COUNT,
   },
   imageAnswers: [],
+  videoAnswers: [],
 };
 
+const singleSpecs = [
+  ['开心', '下面哪张图片是开心的？', ['q01-a-happy.jpg', 'q01-b-sad.jpg']],
+  ['悲伤', '下面哪张图片更能体现悲伤情绪？', ['q02-a-sad.jpg', 'q02-b-fear.jpg']],
+  ['恐惧', '下面哪张图片更能体现恐惧情绪？', ['q03-a-fear.jpg', 'q03-b-happy.jpg']],
+  ['开心', '下面哪张图片更能体现开心情绪？', ['q04-a-happy.jpg', 'q04-b-fear.png']],
+  ['悲伤', '哪一张图片表现出悲伤情绪？', ['q05-a-sad.jpg', 'q05-b-happy.jpg']],
+  ['恐惧', '哪一张图片表现出恐惧情绪？', ['q06-a-fear.jpg', 'q06-b-sad.jpg']],
+  ['开心', '哪一张图片中的人物正在微笑？', ['q07-a-happy.jpg', 'q07-b-fear.jpg']],
+  ['悲伤', '哪一张图片表现出低落情绪？', ['q08-a-sad.png', 'q08-b-happy.jpg']],
+];
+const multiSpecs = [
+  ['开心', '在这 3 张图片中，哪一张表达了快乐？', ['q09-a-happy.jpg', 'q09-b-sad.png', 'q09-c-fear.png']],
+  ['悲伤', '在这 3 张图片中，哪一张表达了悲伤？', ['q10-a-sad.png', 'q10-b-fear.jpg', 'q10-c-happy.jpg']],
+  ['恐惧', '在这 3 张图片中，哪一张表达了恐惧？', ['q11-a-fear.jpg', 'q11-b-happy.jpg', 'q11-c-sad.jpg']],
+  ['开心', '从 3 张图片中找出自然微笑的表情。', ['q12-a-happy.jpg', 'q12-b-sad.jpg', 'q12-c-fear.jpg']],
+  ['悲伤', '从 3 张图片中找出悲伤的表情。', ['q13-a-sad.jpg', 'q13-b-fear.jpg', 'q13-c-happy.jpg']],
+  ['恐惧', '从 3 张图片中找出恐惧的表情。', ['q14-a-fear.jpg', 'q14-b-happy.jpg', 'q14-c-sad.jpg']],
+  ['开心', '从 3 张图片中找出自然微笑的表情。', ['q15-a-happy.jpg', 'q15-b-sad.jpg', 'q15-c-fear.jpg']],
+  ['悲伤', '从 3 张图片中找出悲伤的表情。', ['q16-a-sad.jpg', 'q16-b-fear.jpg', 'q16-c-happy.jpg']],
+];
+function emotionFromFile(fileName) {
+  if (fileName.includes('-happy.')) return '开心';
+  if (fileName.includes('-sad.')) return '悲伤';
+  if (fileName.includes('-fear.')) return '恐惧';
+  throw new Error(`Unknown image emotion: ${fileName}`);
+}
+function buildImageOptions(fileNames) {
+  return fileNames.map((fileName, index) => {
+    const emotion = emotionFromFile(fileName);
+    return { id: String.fromCharCode(65 + index), label: String.fromCharCode(65 + index), emotion, imageUrl: `/images/${fileName}`, url: `/images/${fileName}`, alt: `${emotion}表情图片` };
+  });
+}
+function buildImageTask([emotion, prompt, files], index, mode, points) {
+  const targetFile = files.find(file => emotionFromFile(file) === emotion);
+  const distractors = files.filter(file => file !== targetFile);
+  const correctIndex = index % files.length;
+  const orderedFiles = [...distractors.slice(0, correctIndex), targetFile, ...distractors.slice(correctIndex)];
+  const options = buildImageOptions(orderedFiles);
+  return { id: `image-${mode}-${index + 1}`, type: mode === 'single' ? 'single-choice' : 'multi-choice', mode, points, emotion, target: emotion, prompt, reason: '重点观察眼睛、眉毛、嘴角和整体面部张力。', correctOption: String.fromCharCode(65 + correctIndex), options };
+}
+const imageTasks = [
+  ...singleSpecs.map((spec, index) => buildImageTask(spec, index, 'single', 1)),
+  ...multiSpecs.map((spec, index) => buildImageTask(spec, index, 'multi', 1.5)),
+];
 
-const videoAnalysis = {
-  emotion: '开心', confidence: 0.87,
-  features: ['嘴角上扬，形成自然笑容', '眉部舒展，眼睛轻微眯起', '表情保持稳定，持续约 6 秒'],
-  durationSeconds: 6,
-  explanation: '嘴角上扬、眉部舒展，整体面部动作符合开心表达。',
-};
+function videoAnalysis(task = VIDEO_TASKS['video-q1']) {
+  return {
+    emotion: task.target,
+    confidence: 0.87,
+    features: ['嘴角、眉眼等动作变化与目标情绪相符', '面部动作保持稳定', '系统在后台完成本题分析'],
+    durationSeconds: 6,
+    explanation: `面部动作模式与“${task.target}”情绪表达相符。`,
+  };
+}
 
 function sendJson(res, status, data) {
   res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', 'Access-Control-Allow-Origin': '*' });
@@ -42,19 +103,46 @@ function readJson(req) {
   });
 }
 
+function riskBand(score) {
+  if (score <= 17) return { label: '高关注 / ASD 一致表现区', explanation: '面部情绪加工或情境归因存在较明显困难。建议进行完整发育、语言和 ASD 专业评估，本结果不可直接诊断。' };
+  if (score <= 22) return { label: '潜在风险区', explanation: '表现处于边界范围。应结合年龄、语言水平、分项差异、施测状态和家庭/园所观察，必要时在 6–12 个月后使用平行题复测。' };
+  return { label: '低风险 / 典型表现区', explanation: '在本任务中的表现较好，但不能排除 ASD，也不能证明儿童在真实社交情境中没有困难。' };
+}
+
+function updateSessionProgress() {
+  state.session.completed = state.imageAnswers.length + state.videoAnswers.length;
+  state.session.status = state.session.completed === state.session.total ? '已完成' : '进行中';
+}
+
+function upsertAnswer(collection, answer) {
+  const index = collection.findIndex(item => item.taskId === answer.taskId);
+  if (index >= 0) collection[index] = answer;
+  else collection.push(answer);
+}
+
 function report() {
-  const answered = state.imageAnswers.length;
-  const correct = state.imageAnswers.filter(item => item.isCorrect).length;
-  const imageScore = answered ? Math.round((correct / answered) * 100) : 90;
+  const singleScore = state.imageAnswers
+    .filter(item => item.type === 'single' && item.isCorrect)
+    .reduce((total, item) => total + item.points, 0);
+  const multiScore = state.imageAnswers
+    .filter(item => item.type === 'multi' && item.isCorrect)
+    .reduce((total, item) => total + item.points, 0);
+  const videoScore = state.videoAnswers
+    .filter(item => item.isCorrect)
+    .reduce((total, item) => total + item.points, 0);
+  const overall = singleScore + multiScore + videoScore;
+  const band = riskBand(overall);
   return {
     sessionId: state.session.id,
-    scores: { imageChoice: imageScore, imageMulti: 80, video: 82, explanation: 82 },
-    overall: Number(((imageScore + 80 + 82 + 82) / 4).toFixed(1)),
-    conclusion: '整体情绪识别能力较好！',
+    scores: { imageSingle: singleScore, imageMulti: multiScore, video: videoScore, total: overall },
+    overall,
+    total: 30,
+    risk: band,
+    conclusion: band.label,
     insights: [
-      { title: '开心表情', detail: `识别正确率最高 · ${imageScore}%` },
-      { title: '眼睛线索', detail: '能注意到眉眼的变化' },
-      { title: '继续探索', detail: '试着观察更多情绪吧' },
+      { title: '二选一图像分类', detail: `${singleScore} / 8 分` },
+      { title: '三选一图像识别', detail: `${multiScore} / 12 分` },
+      { title: '视频表情任务', detail: `${videoScore} / 10 分` },
     ],
   };
 }
@@ -62,32 +150,87 @@ function report() {
 async function handleApi(req, res, url) {
   if (req.method === 'GET' && url.pathname === '/api/health') return sendJson(res, 200, { ok: true, service: 'expression-norms-api', version: '1.0.0' });
   if (req.method === 'GET' && url.pathname === '/api/session') return sendJson(res, 200, state.session);
-  if (req.method === 'GET' && url.pathname === '/api/tasks/image') return sendJson(res, 200, { tasks: imageTasks, total: imageTasks.length, maxScore: 20 });
-  if (req.method === 'GET' && url.pathname === '/api/video/sample') return sendJson(res, 200, videoAnalysis);
-  if (req.method === 'GET' && url.pathname === '/api/report') return sendJson(res, 200, report());
+  if (req.method === 'GET' && url.pathname === '/api/tasks/image') return sendJson(res, 200, { version: 'demo-2.1', total: imageTasks.length, tasks: imageTasks });
+  if (req.method === 'GET' && url.pathname === '/api/video/sample') return sendJson(res, 200, videoAnalysis());
+  if (req.method === 'GET' && url.pathname === '/api/report') {
+    if (state.session.completed < state.session.total) {
+      return sendJson(res, 409, { error: '请完成全部图片和视频测试后再生成最终报告' });
+    }
+    return sendJson(res, 200, report());
+  }
   if (req.method === 'POST' && url.pathname === '/api/answers/image') {
     try {
       const body = await readJson(req);
-      const task = imageTasks.find(item => item.id === body.taskId) || imageTask;
-      if (!task.options.some(item => item.id === body.optionId)) return sendJson(res, 400, { error: 'invalid optionId' });
+      const taskId = body.taskId;
+      const task = imageTasks.find(item => item.id === taskId);
+      if (!task || !task.options.some(option => option.id === body.optionId)) return sendJson(res, 400, { error: 'invalid image task or option' });
+      const type = task.mode;
+      const points = task.points;
       const isCorrect = body.optionId === task.correctOption;
-      const score = isCorrect ? task.points : 0;
-      state.imageAnswers.push({ taskId: task.id, optionId: body.optionId, isCorrect, score, answeredAt: new Date().toISOString() });
-      return sendJson(res, 200, { taskId: task.id, optionId: body.optionId, isCorrect, score, points: task.points, feedback: isCorrect ? '答对啦！这张图片符合目标情绪。' : '再观察一下眼睛、眉毛和嘴角的变化吧。' });
+      const answer = { taskId, type, optionId: body.optionId, isCorrect, points, answeredAt: new Date().toISOString() };
+      upsertAnswer(state.imageAnswers, answer);
+      updateSessionProgress();
+      return sendJson(res, 200, { taskId, optionId: body.optionId, isCorrect, score: isCorrect ? points : 0, feedback: isCorrect ? '判断正确。' : '再观察一下嘴角、眉眼和整体面部张力。' });
     } catch (error) { return sendJson(res, 400, { error: error.message }); }
   }
-  if (req.method === 'POST' && url.pathname === '/api/video/analyze') return sendJson(res, 200, { ...videoAnalysis, source: 'demo-model', fileName: (await readJson(req).catch(() => ({}))).fileName || null });
-  if (req.method === 'POST' && url.pathname === '/api/session/reset') { state.imageAnswers = []; return sendJson(res, 200, { ...state.session, completed: 1 }); }
+  if (req.method === 'POST' && url.pathname === '/api/video/analyze') {
+    const body = await readJson(req).catch(() => ({}));
+    const task = VIDEO_TASKS[body.taskId];
+    if (!task) return sendJson(res, 400, { error: 'invalid video task' });
+    const analysis = videoAnalysis(task);
+    const isCorrect = analysis.emotion === task.target;
+    upsertAnswer(state.videoAnswers, { taskId: body.taskId, isCorrect, points: 2, emotion: analysis.emotion, answeredAt: new Date().toISOString() });
+    updateSessionProgress();
+    return sendJson(res, 200, { ...analysis, isCorrect, score: isCorrect ? 2 : 0, source: 'demo-model', fileName: task.fileName });
+  }
+  if (req.method === 'POST' && url.pathname === '/api/session/reset') {
+    state.imageAnswers = [];
+    state.videoAnswers = [];
+    updateSessionProgress();
+    return sendJson(res, 200, state.session);
+  }
   return sendJson(res, 404, { error: 'API route not found' });
 }
 
+function serveVideo(req, res, pathname) {
+  const fileName = path.basename(pathname);
+  const filePath = VIDEO_FILES[fileName];
+  if (!filePath || !fs.existsSync(filePath)) return sendJson(res, 404, { error: 'Video not found' });
+
+  const size = fs.statSync(filePath).size;
+  const range = req.headers.range;
+  if (!range) {
+    res.writeHead(200, { 'Content-Type': 'video/mp4', 'Content-Length': size, 'Accept-Ranges': 'bytes' });
+    return fs.createReadStream(filePath).pipe(res);
+  }
+
+  const match = /^bytes=(\d*)-(\d*)$/.exec(range);
+  if (!match) {
+    res.writeHead(416, { 'Content-Range': `bytes */${size}` });
+    return res.end();
+  }
+  const start = match[1] ? Number(match[1]) : 0;
+  const end = match[2] ? Math.min(Number(match[2]), size - 1) : size - 1;
+  if (start >= size || start > end) {
+    res.writeHead(416, { 'Content-Range': `bytes */${size}` });
+    return res.end();
+  }
+  res.writeHead(206, {
+    'Content-Type': 'video/mp4',
+    'Content-Length': end - start + 1,
+    'Content-Range': `bytes ${start}-${end}/${size}`,
+    'Accept-Ranges': 'bytes',
+  });
+  fs.createReadStream(filePath, { start, end }).pipe(res);
+}
+
 function serveStatic(res, pathname) {
-  const requested = pathname === '/' ? '/index.html' : pathname;
-  const root = requested.startsWith('/images/') ? IMAGE_ROOT : requested.startsWith('/videos/') ? VIDEO_ROOT : FRONTEND_ROOT;
-  const relative = requested.startsWith('/images/') ? requested.slice('/images'.length) : requested.startsWith('/videos/') ? requested.slice('/videos'.length) : requested;
-  const filePath = path.resolve(root, '.' + relative);
-  if (!filePath.startsWith(root) || !fs.existsSync(filePath) || fs.statSync(filePath).isDirectory()) return sendJson(res, 404, { error: 'Not found' });
-  const types = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.png': 'image/png', '.webp': 'image/webp', '.mp4': 'video/mp4', '.webm': 'video/webm' };
+  const isImage = pathname.startsWith('/images/');
+  const root = isImage ? IMAGE_ROOT : FRONTEND_ROOT;
+  const relative = isImage ? pathname.slice('/images/'.length) : (pathname === '/' ? 'index.html' : pathname.slice(1));
+  const filePath = path.resolve(root, relative);
+  if ((filePath !== root && !filePath.startsWith(`${root}${path.sep}`)) || !fs.existsSync(filePath) || fs.statSync(filePath).isDirectory()) return sendJson(res, 404, { error: 'Not found' });
+  const types = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.png': 'image/png' };
   res.writeHead(200, { 'Content-Type': types[path.extname(filePath)] || 'application/octet-stream' });
   fs.createReadStream(filePath).pipe(res);
 }
@@ -97,6 +240,7 @@ const server = http.createServer(async (req, res) => {
   if (req.method === 'OPTIONS') { res.writeHead(204, { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Methods': 'GET,POST,OPTIONS', 'Access-Control-Allow-Headers': 'Content-Type' }); return res.end(); }
   if (url.pathname.startsWith('/api/')) return handleApi(req, res, url);
   if (req.method !== 'GET') return sendJson(res, 405, { error: 'Method not allowed' });
+  if (url.pathname.startsWith('/media/videos/')) return serveVideo(req, res, url.pathname);
   serveStatic(res, url.pathname);
 });
 
