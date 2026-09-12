@@ -11,27 +11,25 @@ from urllib.parse import urlparse
 from src.evaluation.scoring import build_report
 from src.image_task.tasks import IMAGE_TASKS
 from src.report.generator import generate_report
-from src.video_task.analyzer import analyze_video
+from src.video_task.analyzer import analyze_captured_frames, analyze_video
 
 ROOT = Path(__file__).resolve().parents[1]
 FRONTEND_ROOT = ROOT / "frontend"
 IMAGE_ROOT = ROOT / "data" / "images"
 PORT = int(os.getenv("PORT", "5173"))
-IMAGE_TASK_COUNT = 16
-VIDEO_TASK_COUNT = 5
+IMAGE_TASK_COUNT = 6
+VIDEO_TASK_COUNT = 3
+IMAGE_POINTS = 3
+VIDEO_POINTS = 4
 VIDEO_TASKS = {
     "video-q1": {"fileName": "happy-1.mp4", "target": "开心"},
     "video-q2": {"fileName": "sad-1.mp4", "target": "难过"},
-    "video-q3": {"fileName": "fear-1.mp4", "target": "恐惧"},
-    "video-q4": {"fileName": "happy-2.mp4", "target": "开心"},
-    "video-q5": {"fileName": "sad-2.mp4", "target": "难过"},
+    "video-q3": {"fileName": "fear-1.mp4", "target": "害怕"},
 }
 VIDEO_FILES = {
     "happy-1.mp4": ROOT / "data" / "videos" / "happy" / "happy_1.mp4",
     "sad-1.mp4": ROOT / "data" / "videos" / "sad" / "sad_1.mp4",
     "fear-1.mp4": ROOT / "data" / "videos" / "fear" / "fear_1.mp4",
-    "happy-2.mp4": ROOT / "data" / "videos" / "happy" / "happy_2.mp4",
-    "sad-2.mp4": ROOT / "data" / "videos" / "sad" / "sad_2.mp4",
 }
 SESSION = {"id": "demo-session-001", "childName": "乐乐小朋友", "status": "进行中", "completed": 0, "total": IMAGE_TASK_COUNT + VIDEO_TASK_COUNT}
 IMAGE_ANSWERS: list[dict] = []
@@ -100,12 +98,12 @@ class Handler(BaseHTTPRequestHandler):
             body = self.read_body()
             if route == "/api/answers/image":
                 task_id = body.get("taskId", "")
-                match = re.fullmatch(r"image-(single|multi)-[1-8]", task_id)
+                match = re.fullmatch(r"image-single-[1-6]", task_id)
                 option_id = body.get("optionId")
                 if not match or option_id not in {"A", "B", "C"}:
                     raise ValueError("invalid image task or option")
-                task_type = match.group(1)
-                points = 1 if task_type == "single" else 1.5
+                task_type = "single"
+                points = IMAGE_POINTS
                 task = next((item for item in IMAGE_TASKS if item["id"] == task_id), None)
                 if task is None or option_id not in {item["id"] for item in task["options"]}:
                     raise ValueError("invalid image task or option")
@@ -119,12 +117,12 @@ class Handler(BaseHTTPRequestHandler):
                 task = VIDEO_TASKS.get(body.get("taskId"))
                 if not task:
                     raise ValueError("invalid video task")
-                analysis = analyze_video(task["fileName"], task["target"])
-                correct = analysis["emotion"] == task["target"]
-                answer = {"taskId": body["taskId"], "isCorrect": correct, "points": 2, "emotion": analysis["emotion"], "answeredAt": "server-time"}
+                analysis = analyze_captured_frames(body.get("frames", []), task["target"])
+                correct = analysis.get("isMatch") is True
+                answer = {"taskId": body["taskId"], "isCorrect": correct, "points": VIDEO_POINTS, "emotion": analysis["emotion"], "target": task["target"], "answeredAt": "server-time"}
                 upsert_answer(VIDEO_ANSWERS, answer)
                 update_session_progress()
-                return self.json_response(200, {**analysis, "isCorrect": correct, "score": 2 if correct else 0, "fileName": task["fileName"]})
+                return self.json_response(200, {**analysis, "isCorrect": correct, "score": VIDEO_POINTS if correct else 0, "fileName": task["fileName"]})
             if route == "/api/session/reset":
                 IMAGE_ANSWERS.clear()
                 VIDEO_ANSWERS.clear()

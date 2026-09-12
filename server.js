@@ -1,26 +1,26 @@
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
+const { spawn } = require('child_process');
 
 const PORT = Number(process.env.PORT || 5173);
 const ROOT = __dirname;
+const PYTHON_EXECUTABLE = process.env.PYTHON || (fs.existsSync(path.join(ROOT, '.venv', 'Scripts', 'python.exe')) ? path.join(ROOT, '.venv', 'Scripts', 'python.exe') : 'python');
 const FRONTEND_ROOT = path.join(ROOT, 'frontend');
 const IMAGE_ROOT = path.join(ROOT, 'data', 'images');
 const VIDEO_FILES = {
   'happy-1.mp4': path.join(ROOT, 'data', 'videos', 'happy', 'happy_1.mp4'),
   'sad-1.mp4': path.join(ROOT, 'data', 'videos', 'sad', 'sad_1.mp4'),
   'fear-1.mp4': path.join(ROOT, 'data', 'videos', 'fear', 'fear_1.mp4'),
-  'happy-2.mp4': path.join(ROOT, 'data', 'videos', 'happy', 'happy_2.mp4'),
-  'sad-2.mp4': path.join(ROOT, 'data', 'videos', 'sad', 'sad_2.mp4'),
 };
-const IMAGE_TASK_COUNT = 16;
-const VIDEO_TASK_COUNT = 5;
+const IMAGE_TASK_COUNT = 6;
+const VIDEO_TASK_COUNT = 3;
+const IMAGE_POINTS = 3;
+const VIDEO_POINTS = 4;
 const VIDEO_TASKS = {
   'video-q1': { fileName: 'happy-1.mp4', target: '开心' },
   'video-q2': { fileName: 'sad-1.mp4', target: '难过' },
-  'video-q3': { fileName: 'fear-1.mp4', target: '恐惧' },
-  'video-q4': { fileName: 'happy-2.mp4', target: '开心' },
-  'video-q5': { fileName: 'sad-2.mp4', target: '难过' },
+  'video-q3': { fileName: 'fear-1.mp4', target: '害怕' },
 };
 const state = {
   session: {
@@ -35,29 +35,25 @@ const state = {
 };
 
 const singleSpecs = [
-  ['开心', '下面哪张图片是开心的？', ['q01-a-happy.jpg', 'q01-b-sad.jpg']],
-  ['悲伤', '下面哪张图片更能体现悲伤情绪？', ['q02-a-sad.jpg', 'q02-b-fear.jpg']],
-  ['恐惧', '下面哪张图片更能体现恐惧情绪？', ['q03-a-fear.jpg', 'q03-b-happy.jpg']],
-  ['开心', '下面哪张图片更能体现开心情绪？', ['q04-a-happy.jpg', 'q04-b-fear.png']],
-  ['悲伤', '哪一张图片表现出悲伤情绪？', ['q05-a-sad.jpg', 'q05-b-happy.jpg']],
-  ['恐惧', '哪一张图片表现出恐惧情绪？', ['q06-a-fear.jpg', 'q06-b-sad.jpg']],
-  ['开心', '哪一张图片中的人物正在微笑？', ['q07-a-happy.jpg', 'q07-b-fear.jpg']],
-  ['悲伤', '哪一张图片表现出低落情绪？', ['q08-a-sad.png', 'q08-b-happy.jpg']],
+  ['开心', '下面哪张图片是开心的？', ['happy1.jpg', 'sad1.jpg']],
+  ['悲伤', '下面哪张图片更能体现悲伤情绪？', ['happy2.jpg', 'sad2.jpg']],
+  ['恐惧', '下面哪张图片更能体现恐惧情绪？', ['fear1.jpg', 'happy3.jpg']],
+  ['开心', '下面哪张图片更能体现开心情绪？', ['sad3.jpg', 'happy4.jpg']],
+  ['恐惧', '哪一张图片表现出恐惧情绪？', ['happy5.jpg', 'fear2.jpg']],
+  ['悲伤', '哪一张图片表现出悲伤情绪？', ['happy6.jpg', 'sad4.jpg']],
 ];
 const multiSpecs = [
-  ['开心', '在这 3 张图片中，哪一张表达了快乐？', ['q09-a-happy.jpg', 'q09-b-sad.png', 'q09-c-fear.png']],
-  ['悲伤', '在这 3 张图片中，哪一张表达了悲伤？', ['q10-a-sad.png', 'q10-b-fear.jpg', 'q10-c-happy.jpg']],
-  ['恐惧', '在这 3 张图片中，哪一张表达了恐惧？', ['q11-a-fear.jpg', 'q11-b-happy.jpg', 'q11-c-sad.jpg']],
-  ['开心', '从 3 张图片中找出自然微笑的表情。', ['q12-a-happy.jpg', 'q12-b-sad.jpg', 'q12-c-fear.jpg']],
-  ['悲伤', '从 3 张图片中找出悲伤的表情。', ['q13-a-sad.jpg', 'q13-b-fear.jpg', 'q13-c-happy.jpg']],
-  ['恐惧', '从 3 张图片中找出恐惧的表情。', ['q14-a-fear.jpg', 'q14-b-happy.jpg', 'q14-c-sad.jpg']],
-  ['开心', '从 3 张图片中找出自然微笑的表情。', ['q15-a-happy.jpg', 'q15-b-sad.jpg', 'q15-c-fear.jpg']],
-  ['悲伤', '从 3 张图片中找出悲伤的表情。', ['q16-a-sad.jpg', 'q16-b-fear.jpg', 'q16-c-happy.jpg']],
+  ['恐惧', '在这 3 张图片中，哪一张表达了恐惧？', ['happy7.jpg', 'sad5.jpg', 'fear3.jpg']],
+  ['悲伤', '在这 3 张图片中，哪一张表达了悲伤？', ['happy8.jpg', 'sad6.jpg', 'happy9.jpg']],
+  ['开心', '从 3 张图片中找出自然微笑的表情。', ['happy10.jpg', 'sad7.jpg', 'sad8.jpg']],
+  ['悲伤', '在这 3 张图片中，哪一张表达了悲伤？', ['happy11.jpg', 'sad9.jpg', 'happy12.jpg']],
+  ['开心', '从 3 张图片中找出自然微笑的表情。', ['happy13.jpg', 'sad10.jpg', 'sad11.jpg']],
+  ['悲伤', '在这 3 张图片中，哪一张表达了悲伤？', ['happy14.jpg', 'sad12.jpg', 'happy15.jpg']],
 ];
 function emotionFromFile(fileName) {
-  if (fileName.includes('-happy.')) return '开心';
-  if (fileName.includes('-sad.')) return '悲伤';
-  if (fileName.includes('-fear.')) return '恐惧';
+  if (/^happy\d+\./.test(fileName)) return '开心';
+  if (/^sad\d+\./.test(fileName)) return '悲伤';
+  if (/^fear\d+\./.test(fileName)) return '恐惧';
   throw new Error(`Unknown image emotion: ${fileName}`);
 }
 function buildImageOptions(fileNames) {
@@ -68,24 +64,23 @@ function buildImageOptions(fileNames) {
 }
 function buildImageTask([emotion, prompt, files], index, mode, points) {
   const targetFile = files.find(file => emotionFromFile(file) === emotion);
-  const distractors = files.filter(file => file !== targetFile);
-  const correctIndex = index % files.length;
-  const orderedFiles = [...distractors.slice(0, correctIndex), targetFile, ...distractors.slice(correctIndex)];
-  const options = buildImageOptions(orderedFiles);
+  const correctIndex = files.indexOf(targetFile);
+  const options = buildImageOptions(files);
   return { id: `image-${mode}-${index + 1}`, type: mode === 'single' ? 'single-choice' : 'multi-choice', mode, points, emotion, target: emotion, prompt, reason: '重点观察眼睛、眉毛、嘴角和整体面部张力。', correctOption: String.fromCharCode(65 + correctIndex), options };
 }
 const imageTasks = [
-  ...singleSpecs.map((spec, index) => buildImageTask(spec, index, 'single', 1)),
-  ...multiSpecs.map((spec, index) => buildImageTask(spec, index, 'multi', 1.5)),
+  ...singleSpecs.map((spec, index) => buildImageTask(spec, index, 'single', IMAGE_POINTS)),
 ];
 
 function videoAnalysis(task = VIDEO_TASKS['video-q1']) {
   return {
     emotion: task.target,
     confidence: 0.87,
+    targetEmotion: task.target,
+    isMatch: true,
     features: ['嘴角、眉眼等动作变化与目标情绪相符', '面部动作保持稳定', '系统在后台完成本题分析'],
     durationSeconds: 6,
-    explanation: `面部动作模式与“${task.target}”情绪表达相符。`,
+    explanation: `捕捉到的面部动作模式与目标“${task.target}”情绪表达相符。`,
   };
 }
 
@@ -97,7 +92,7 @@ function sendJson(res, status, data) {
 function readJson(req) {
   return new Promise((resolve, reject) => {
     let body = '';
-    req.on('data', chunk => { body += chunk; if (body.length > 1000000) reject(new Error('payload too large')); });
+    req.on('data', chunk => { body += chunk; if (body.length > 4_000_000) reject(new Error('payload too large')); });
     req.on('end', () => { try { resolve(body ? JSON.parse(body) : {}); } catch { reject(new Error('invalid json')); } });
     req.on('error', reject);
   });
@@ -120,36 +115,66 @@ function upsertAnswer(collection, answer) {
   else collection.push(answer);
 }
 
+function analyzeCapturedFrames(task, frames) {
+  if (!Array.isArray(frames) || frames.length === 0) return Promise.reject(new Error('未收到摄像头采集画面'));
+  return new Promise((resolve, reject) => {
+    const child = spawn(PYTHON_EXECUTABLE, ['-m', 'video_emotion_model.frame_cli'], { cwd: ROOT, windowsHide: true });
+    let stdout = '';
+    let stderr = '';
+    child.stdout.on('data', chunk => { stdout += chunk; });
+    child.stderr.on('data', chunk => { stderr += chunk; });
+    child.on('error', error => reject(new Error(`无法启动摄像头情绪模型：${error.message}`)));
+    child.on('close', code => {
+      if (code !== 0) return reject(new Error(stderr.trim() || `摄像头情绪模型退出，状态码 ${code}`));
+      try {
+        const jsonLine = stdout.trim().split(/\r?\n/).filter(Boolean).at(-1);
+        resolve(JSON.parse(jsonLine));
+      } catch (error) {
+        reject(new Error(`无法读取摄像头情绪模型结果：${error.message}`));
+      }
+    });
+    child.stdin.end(JSON.stringify({ frames, targetEmotion: task.target }));
+  });
+}
 function report() {
-  const singleScore = state.imageAnswers
-    .filter(item => item.type === 'single' && item.isCorrect)
-    .reduce((total, item) => total + item.points, 0);
-  const multiScore = state.imageAnswers
-    .filter(item => item.type === 'multi' && item.isCorrect)
+  const imageScore = state.imageAnswers
+    .filter(item => item.isCorrect)
     .reduce((total, item) => total + item.points, 0);
   const videoScore = state.videoAnswers
     .filter(item => item.isCorrect)
     .reduce((total, item) => total + item.points, 0);
-  const overall = singleScore + multiScore + videoScore;
+  const overall = imageScore + videoScore;
   const band = riskBand(overall);
+  const details = {
+    images: state.imageAnswers.map(answer => {
+      const task = imageTasks.find(item => item.id === answer.taskId);
+      return { taskId: answer.taskId, taskType: answer.type, target: task?.target, selectedOption: answer.optionId, isCorrect: answer.isCorrect, score: answer.isCorrect ? answer.points : 0, maxScore: answer.points };
+    }),
+    videos: state.videoAnswers.map(answer => {
+      const task = VIDEO_TASKS[answer.taskId];
+      return { taskId: answer.taskId, target: task?.target, capturedEmotion: answer.emotion, isMatch: answer.isCorrect, score: answer.isCorrect ? answer.points : 0, maxScore: VIDEO_POINTS };
+    }),
+  };
   return {
     sessionId: state.session.id,
-    scores: { imageSingle: singleScore, imageMulti: multiScore, video: videoScore, total: overall },
+    scores: { image: imageScore, video: videoScore, total: overall },
     overall,
     total: 30,
     risk: band,
     conclusion: band.label,
     insights: [
-      { title: '二选一图像分类', detail: `${singleScore} / 8 分` },
-      { title: '三选一图像识别', detail: `${multiScore} / 12 分` },
-      { title: '视频表情任务', detail: `${videoScore} / 10 分` },
+      { title: '图片情绪识别', detail: `${imageScore} / 18 分` },
+      { title: '视频表情任务', detail: `${videoScore} / 12 分` },
     ],
+    details,
   };
 }
 
 async function handleApi(req, res, url) {
   if (req.method === 'GET' && url.pathname === '/api/health') return sendJson(res, 200, { ok: true, service: 'expression-norms-api', version: '1.0.0' });
-  if (req.method === 'GET' && url.pathname === '/api/session') return sendJson(res, 200, state.session);
+  if (req.method === 'GET' && url.pathname === '/api/session') {
+    return sendJson(res, 200, state.session);
+  }
   if (req.method === 'GET' && url.pathname === '/api/tasks/image') return sendJson(res, 200, { version: 'demo-2.1', total: imageTasks.length, tasks: imageTasks });
   if (req.method === 'GET' && url.pathname === '/api/video/sample') return sendJson(res, 200, videoAnalysis());
   if (req.method === 'GET' && url.pathname === '/api/report') {
@@ -165,7 +190,7 @@ async function handleApi(req, res, url) {
       const task = imageTasks.find(item => item.id === taskId);
       if (!task || !task.options.some(option => option.id === body.optionId)) return sendJson(res, 400, { error: 'invalid image task or option' });
       const type = task.mode;
-      const points = task.points;
+      const points = IMAGE_POINTS;
       const isCorrect = body.optionId === task.correctOption;
       const answer = { taskId, type, optionId: body.optionId, isCorrect, points, answeredAt: new Date().toISOString() };
       upsertAnswer(state.imageAnswers, answer);
@@ -177,11 +202,16 @@ async function handleApi(req, res, url) {
     const body = await readJson(req).catch(() => ({}));
     const task = VIDEO_TASKS[body.taskId];
     if (!task) return sendJson(res, 400, { error: 'invalid video task' });
-    const analysis = videoAnalysis(task);
-    const isCorrect = analysis.emotion === task.target;
-    upsertAnswer(state.videoAnswers, { taskId: body.taskId, isCorrect, points: 2, emotion: analysis.emotion, answeredAt: new Date().toISOString() });
+    let analysis;
+    try {
+      analysis = await analyzeCapturedFrames(task, body.frames);
+    } catch (error) {
+      return sendJson(res, 422, { error: error.message });
+    }
+    const isCorrect = analysis.isMatch === true;
+    upsertAnswer(state.videoAnswers, { taskId: body.taskId, isCorrect, points: VIDEO_POINTS, emotion: analysis.emotion, target: task.target, answeredAt: new Date().toISOString() });
     updateSessionProgress();
-    return sendJson(res, 200, { ...analysis, isCorrect, score: isCorrect ? 2 : 0, source: 'demo-model', fileName: task.fileName });
+    return sendJson(res, 200, { ...analysis, isCorrect, score: isCorrect ? VIDEO_POINTS : 0, source: analysis.source || 'opencv-deepface', fileName: task.fileName });
   }
   if (req.method === 'POST' && url.pathname === '/api/session/reset') {
     state.imageAnswers = [];

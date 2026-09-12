@@ -16,31 +16,31 @@ let videoTaskIndex = 0;
 let cameraStream = null;
 let cameraRecorder = null;
 let cameraChunks = [];
+let videoLabelTimer = null;
+const IMAGE_POINTS = 3;
+const VIDEO_POINTS = 4;
+const VIDEO_CAPTURE_WINDOW_MS = 6000;
 const imageResults = [];
 const singleSpecs = [
-  ['开心', '下面哪张图片是开心的？', ['q01-a-happy.jpg', 'q01-b-sad.jpg']],
-  ['悲伤', '下面哪张图片更能体现悲伤情绪？', ['q02-a-sad.jpg', 'q02-b-fear.jpg']],
-  ['恐惧', '下面哪张图片更能体现恐惧情绪？', ['q03-a-fear.jpg', 'q03-b-happy.jpg']],
-  ['开心', '下面哪张图片更能体现开心情绪？', ['q04-a-happy.jpg', 'q04-b-fear.png']],
-  ['悲伤', '哪一张图片表现出悲伤情绪？', ['q05-a-sad.jpg', 'q05-b-happy.jpg']],
-  ['恐惧', '哪一张图片表现出恐惧情绪？', ['q06-a-fear.jpg', 'q06-b-sad.jpg']],
-  ['开心', '哪一张图片中的人物正在微笑？', ['q07-a-happy.jpg', 'q07-b-fear.jpg']],
-  ['悲伤', '哪一张图片表现出低落情绪？', ['q08-a-sad.png', 'q08-b-happy.jpg']],
+  ['开心', '下面哪张图片是开心的？', ['happy1.jpg', 'sad1.jpg']],
+  ['悲伤', '下面哪张图片更能体现悲伤情绪？', ['happy2.jpg', 'sad2.jpg']],
+  ['恐惧', '下面哪张图片更能体现恐惧情绪？', ['fear1.jpg', 'happy3.jpg']],
+  ['开心', '下面哪张图片更能体现开心情绪？', ['sad3.jpg', 'happy4.jpg']],
+  ['恐惧', '哪一张图片表现出恐惧情绪？', ['happy5.jpg', 'fear2.jpg']],
+  ['悲伤', '哪一张图片表现出悲伤情绪？', ['happy6.jpg', 'sad4.jpg']],
 ];
 const multiSpecs = [
-  ['开心', '在这 3 张图片中，哪一张表达了快乐？', ['q09-a-happy.jpg', 'q09-b-sad.png', 'q09-c-fear.png']],
-  ['悲伤', '在这 3 张图片中，哪一张表达了悲伤？', ['q10-a-sad.png', 'q10-b-fear.jpg', 'q10-c-happy.jpg']],
-  ['恐惧', '在这 3 张图片中，哪一张表达了恐惧？', ['q11-a-fear.jpg', 'q11-b-happy.jpg', 'q11-c-sad.jpg']],
-  ['开心', '从 3 张图片中找出自然微笑的表情。', ['q12-a-happy.jpg', 'q12-b-sad.jpg', 'q12-c-fear.jpg']],
-  ['悲伤', '从 3 张图片中找出悲伤的表情。', ['q13-a-sad.jpg', 'q13-b-fear.jpg', 'q13-c-happy.jpg']],
-  ['恐惧', '从 3 张图片中找出恐惧的表情。', ['q14-a-fear.jpg', 'q14-b-happy.jpg', 'q14-c-sad.jpg']],
-  ['开心', '从 3 张图片中找出自然微笑的表情。', ['q15-a-happy.jpg', 'q15-b-sad.jpg', 'q15-c-fear.jpg']],
-  ['悲伤', '从 3 张图片中找出悲伤的表情。', ['q16-a-sad.jpg', 'q16-b-fear.jpg', 'q16-c-happy.jpg']],
+  ['恐惧', '在这 3 张图片中，哪一张表达了恐惧？', ['happy7.jpg', 'sad5.jpg', 'fear3.jpg']],
+  ['悲伤', '在这 3 张图片中，哪一张表达了悲伤？', ['happy8.jpg', 'sad6.jpg', 'happy9.jpg']],
+  ['开心', '从 3 张图片中找出自然微笑的表情。', ['happy10.jpg', 'sad7.jpg', 'sad8.jpg']],
+  ['悲伤', '在这 3 张图片中，哪一张表达了悲伤？', ['happy11.jpg', 'sad9.jpg', 'happy12.jpg']],
+  ['开心', '从 3 张图片中找出自然微笑的表情。', ['happy13.jpg', 'sad10.jpg', 'sad11.jpg']],
+  ['悲伤', '在这 3 张图片中，哪一张表达了悲伤？', ['happy14.jpg', 'sad12.jpg', 'happy15.jpg']],
 ];
 const emotionFromFile = fileName => {
-  if (fileName.includes('-happy.')) return '开心';
-  if (fileName.includes('-sad.')) return '悲伤';
-  if (fileName.includes('-fear.')) return '恐惧';
+  if (/^happy\d+\./.test(fileName)) return '开心';
+  if (/^sad\d+\./.test(fileName)) return '悲伤';
+  if (/^fear\d+\./.test(fileName)) return '恐惧';
   throw new Error(`Unknown image emotion: ${fileName}`);
 };
 const buildCandidates = files => files.map((fileName, index) => {
@@ -54,23 +54,16 @@ const buildImageTask = ([target, prompt, files], index, mode, points) => ({
   prompt,
   target,
   reason: '重点观察眼睛、眉毛、嘴角和整体面部张力。',
-  candidates: (() => {
-    const targetFile = files.find(file => emotionFromFile(file) === target);
-    const distractors = files.filter(file => file !== targetFile);
-    const correctIndex = index % files.length;
-    return buildCandidates([...distractors.slice(0, correctIndex), targetFile, ...distractors.slice(correctIndex)]);
-  })(),
+  // Keep the configured asset order so every test presents the requested sequence.
+  candidates: buildCandidates(files),
 });
 const imageTasks = [
-  ...singleSpecs.map((spec, index) => buildImageTask(spec, index, 'single', 1)),
-  ...multiSpecs.map((spec, index) => buildImageTask(spec, index, 'multi', 1.5)),
+  ...singleSpecs.map((spec, index) => buildImageTask(spec, index, 'single', IMAGE_POINTS)),
 ];
 const videoTasks = [
   { id: 'video-q1', fileName: 'happy-1.mp4', target: '开心' },
   { id: 'video-q2', fileName: 'sad-1.mp4', target: '难过' },
-  { id: 'video-q3', fileName: 'fear-1.mp4', target: '恐惧' },
-  { id: 'video-q4', fileName: 'happy-2.mp4', target: '开心' },
-  { id: 'video-q5', fileName: 'sad-2.mp4', target: '难过' },
+  { id: 'video-q3', fileName: 'fear-1.mp4', target: '害怕' },
 ];
 const videoResults = [];
 
@@ -99,39 +92,62 @@ function updateReportAccess() {
 }
 
 function updateScoreSummary() {
-  const singles = imageResults.filter(item => item.mode === 'single');
-  const multis = imageResults.filter(item => item.mode === 'multi');
-  const singleScore = singles.reduce((sum, item) => sum + (item.correct ? 1 : 0), 0);
-  const multiScore = multis.reduce((sum, item) => sum + (item.correct ? 1.5 : 0), 0);
-  const videoScore = videoResults.reduce((sum, item) => sum + (item?.correct ? 2 : 0), 0);
-  const overall = singleScore + multiScore + videoScore;
+  const imageScore = imageResults.reduce((sum, item, index) => sum + (item?.correct ? imageTasks[index].points : 0), 0);
+  const videoScore = videoResults.reduce((sum, item) => sum + (item?.score || 0), 0);
+  const overall = imageScore + videoScore;
   const completedCount = imageResults.filter(Boolean).length + videoResults.filter(Boolean).length;
   const band = getRiskBand(overall);
   document.getElementById('result-score').innerHTML = `${formatScore(overall)}<small> / 30</small>`;
   document.getElementById('report-score').textContent = `${formatScore(overall)} / 30 分`;
-  document.getElementById('image-single-score').textContent = `${formatScore(singleScore)} / 8 分`;
-  document.getElementById('image-multi-score').textContent = `${formatScore(multiScore)} / 12 分`;
-  document.getElementById('video-score').textContent = `${formatScore(videoScore)} / 10 分`;
-  document.getElementById('explanation-score').textContent = `${completedCount} / 21 题`;
-  document.getElementById('report-breakdown').textContent = `二选一 ${formatScore(singleScore)}/8 · 三选一 ${formatScore(multiScore)}/12 · 视频 ${formatScore(videoScore)}/10`;
+  document.getElementById('image-score').textContent = `${formatScore(imageScore)} / 18 分`;
+  document.getElementById('video-score').textContent = `${formatScore(videoScore)} / 12 分`;
+  document.getElementById('explanation-score').textContent = `${completedCount} / 9 题`;
+  document.getElementById('report-breakdown').textContent = `图片 ${formatScore(imageScore)}/18 · 视频 ${formatScore(videoScore)}/12`;
   document.getElementById('result-risk-label').textContent = band.label;
   document.getElementById('result-risk-explanation').textContent = band.explanation;
   document.getElementById('report-risk-label').textContent = band.label;
   document.getElementById('report-risk-explanation').textContent = band.explanation;
+  renderItemizedScores();
+}
+
+function renderItemizedScores() {
+  const container = document.getElementById('report-itemized-scores');
+  if (!container) return;
+  const imageRows = imageTasks.map((task, index) => {
+    const result = imageResults[index];
+    const score = result?.correct ? task.points : 0;
+    const answer = result ? `选择 ${result.optionId}` : '未完成';
+    const status = result ? (result.correct ? '正确' : '错误') : '待完成';
+    return `<li><span class="score-item-title">图片 ${index + 1} · ${task.mode === 'single' ? '二选一' : '三选一'}</span><span>${answer} · ${status}</span><b>${score} / ${task.points} 分</b></li>`;
+  }).join('');
+  const videoRows = videoTasks.map((task, index) => {
+    const result = videoResults[index];
+    const captured = result?.emotion || '未完成';
+    const status = result ? (result.correct ? '一致' : '不一致') : '待完成';
+    const score = result?.score || 0;
+    return `<li><span class="score-item-title">视频 ${index + 1} · 目标：${task.target}</span><span>捕捉：${captured} · ${status}</span><b>${score} / ${VIDEO_POINTS} 分</b></li>`;
+  }).join('');
+  container.innerHTML = `<section><h4>图片任务</h4><ul>${imageRows}</ul></section><section><h4>视频表情任务</h4><ul>${videoRows}</ul></section>`;
 }
 function renderImageTask() {
   const task = imageTasks[imageTaskIndex];
   const previousResult = imageResults[imageTaskIndex];
-  const sectionOffset = task.mode === 'single' ? 0 : 8;
-  document.getElementById('image-progress').textContent = `${imageTaskIndex - sectionOffset + 1} / 8`;
-  document.getElementById('image-progress-fill').style.width = `${((imageTaskIndex - sectionOffset + 1) / 8) * 100}%`;
-  document.getElementById('image-index').textContent = imageTaskIndex - sectionOffset + 1;
-  document.getElementById('image-type-label').textContent = task.mode === 'single' ? '二选一图像分类 · 每题 1 分' : '三选一图像识别 · 每题 1.5 分';
-  document.getElementById('image-hint').textContent = task.mode === 'single' ? '从 2 张候选图片中选出最符合目标情绪的一张' : '从 3 张候选图片中选出最符合目标情绪的一张';
+  document.getElementById('image-progress').textContent = `${imageTaskIndex + 1} / ${imageTasks.length}`;
+  document.getElementById('image-progress-fill').style.width = `${((imageTaskIndex + 1) / imageTasks.length) * 100}%`;
+  document.getElementById('image-index').textContent = imageTaskIndex + 1;
+  document.getElementById('image-type-label').textContent = '二选一图像识别 · 每题 3 分';
+  document.getElementById('image-hint').textContent = '从 2 张候选图片中选出最符合目标情绪的一张';
   document.getElementById('image-prompt').textContent = task.prompt;
   const candidates = document.getElementById('image-candidates');
   candidates.className = `image-candidates ${task.mode}`;
   candidates.innerHTML = task.candidates.map(candidate => `<button class="image-candidate${previousResult?.optionId === candidate.id ? ' selected' : ''}" data-option="${candidate.id}" aria-label="选项 ${candidate.id}"><img src="${candidate.url}" alt="${candidate.alt}" /><span>${candidate.id}</span></button>`).join('');
+  candidates.querySelectorAll('img').forEach(image => {
+    image.addEventListener('error', () => {
+      image.closest('.image-candidate')?.classList.add('image-load-error');
+      image.alt = '图片暂时无法加载';
+      image.style.display = 'none';
+    }, { once: true });
+  });
   selectedEmotion = previousResult?.optionId || '';
   const confirmButton = document.getElementById('confirm-image');
   confirmButton.disabled = !selectedEmotion;
@@ -145,11 +161,66 @@ function renderVideoTask() {
   document.getElementById('video-progress-fill').style.width = `${((videoTaskIndex + 1) / videoTasks.length) * 100}%`;
   const source = document.querySelector('#task-video source');
   source.src = `/media/videos/${task.fileName}`;
-  document.getElementById('task-video').load();
-  document.getElementById('task-video').currentTime = 0;
-  document.getElementById('confirm-video').textContent = '开始播放并捕捉表情　→';
-  document.getElementById('video-state').textContent = '准备好后开始播放并捕捉面部表情';
+  const taskVideo = document.getElementById('task-video');
+  taskVideo.loop = true;
+  taskVideo.load();
+  taskVideo.currentTime = 0;
+  if (document.getElementById('screen-video').classList.contains('active')) {
+    taskVideo.play().catch(() => {
+      document.getElementById('video-state').textContent = '视频已就绪。请使用播放控件开始循环播放，然后开始捕捉与评分。';
+    });
+  }
+  const previousResult = videoResults[videoTaskIndex];
+  const button = document.getElementById('confirm-video');
+  if (previousResult) {
+    button.textContent = videoTaskIndex < videoTasks.length - 1 ? '下一段视频　→' : '查看评估结果　→';
+    document.getElementById('video-state').textContent = '本题分析结果已在后台保存。视频会继续循环，点击按钮进入下一步。';
+  } else {
+    button.textContent = '开始捕捉并评分　→';
+    document.getElementById('video-state').textContent = '视频正在循环播放。点击开始后，系统将捕捉 6 秒面部表情并评分。';
+  }
 }
+
+function showTransientVideoLabel() {
+  const label = document.querySelector('.task-video-box .video-label');
+  if (!label) return;
+  window.clearTimeout(videoLabelTimer);
+  label.classList.add('is-visible');
+  videoLabelTimer = window.setTimeout(() => label.classList.remove('is-visible'), 2200);
+}
+
+async function captureCameraFrames(stream) {
+  const cameraFeed = document.getElementById('camera-feed');
+  const placeholder = document.getElementById('camera-placeholder');
+  const canvas = document.createElement('canvas');
+  const context = canvas.getContext('2d', { alpha: false });
+  const frames = [];
+  cameraFeed.srcObject = stream;
+  placeholder.hidden = true;
+  await cameraFeed.play();
+  const deadline = performance.now() + VIDEO_CAPTURE_WINDOW_MS;
+  while (performance.now() < deadline) {
+    const width = Math.min(cameraFeed.videoWidth || 320, 320);
+    const height = Math.round(width / Math.max((cameraFeed.videoWidth || 320) / (cameraFeed.videoHeight || 240), 1));
+    canvas.width = width;
+    canvas.height = height;
+    context.drawImage(cameraFeed, 0, 0, width, height);
+    frames.push(canvas.toDataURL('image/jpeg', 0.68).split(',')[1]);
+    await new Promise(resolve => window.setTimeout(resolve, 500));
+  }
+  return frames;
+}
+
+function clearCameraPreview() {
+  const cameraFeed = document.getElementById('camera-feed');
+  const placeholder = document.getElementById('camera-placeholder');
+  if (cameraFeed) {
+    cameraFeed.pause();
+    cameraFeed.srcObject = null;
+  }
+  if (placeholder) placeholder.hidden = false;
+}
+
 if (window.lucide) window.lucide.createIcons();
 
 function showScreen(name) {
@@ -169,6 +240,13 @@ function showScreen(name) {
     const destination = link.dataset.screen;
     link.classList.toggle('active', destination === name || (destination === 'image' && name === 'image') || (destination === 'video' && name === 'video'));
   });
+  const taskVideo = document.getElementById('task-video');
+  if (name === 'video') {
+    showTransientVideoLabel();
+    taskVideo?.play().catch(() => {});
+  } else {
+    taskVideo?.pause();
+  }
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
@@ -224,62 +302,57 @@ document.getElementById('confirm-video').addEventListener('click', async () => {
   const task = videoTasks[videoTaskIndex];
   const state = document.getElementById('video-state');
   const taskVideo = document.getElementById('task-video');
+  if (videoResults[videoTaskIndex]) {
+    if (videoTaskIndex < videoTasks.length - 1) {
+      videoTaskIndex += 1;
+      renderVideoTask();
+      return;
+    }
+    if (isAssessmentComplete()) showScreen('result');
+    else {
+      state.textContent = '视频任务已完成，请继续完成图片任务后查看最终报告。';
+      document.getElementById('continue-image').hidden = false;
+    }
+    return;
+  }
   button.disabled = true;
-  state.textContent = '正在启动后台分析…';
+  state.textContent = '正在启动面部表情捕捉…';
   try {
     if (navigator.mediaDevices?.getUserMedia) {
       try {
         cameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false });
-        if (window.MediaRecorder) {
-          cameraChunks = [];
-          cameraRecorder = new MediaRecorder(cameraStream);
-          cameraRecorder.ondataavailable = event => {
-            if (event.data.size) cameraChunks.push(event.data);
-          };
-          cameraRecorder.start();
-        }
       } catch (cameraError) {
-        console.info('未取得摄像头权限，将使用视频模型结果', cameraError.message);
+        throw new Error(`未能启用摄像头：${cameraError.message}`);
       }
+    } else {
+      throw new Error('当前浏览器不支持摄像头采集');
     }
-    state.textContent = '视频播放中，正在捕捉面部表情…';
+    showTransientVideoLabel();
+    state.textContent = '视频将持续循环，正在捕捉 6 秒面部表情…';
     await taskVideo.play();
-    await new Promise(resolve => {
-      if (taskVideo.ended) {
-        resolve();
-        return;
-      }
-      taskVideo.addEventListener('ended', resolve, { once: true });
-    });
-    state.textContent = '视频播放完成，正在生成识别结果…';
-    if (cameraRecorder?.state === 'recording') cameraRecorder.stop();
-    const result = await api('/api/video/analyze', { method: 'POST', body: JSON.stringify({ taskId: task.id, fileName: task.fileName, target: task.target }) });
-    const analysis = result || { emotion: task.target, confidence: 0.87, features: ['嘴角上扬，形成自然笑容', '眉部舒展，眼睛轻微眯起', '表情保持稳定，持续约 6 秒'], explanation: '面部动作模式与目标情绪表达相符。' };
-    const isCorrect = analysis.isCorrect ?? analysis.emotion === task.target;
-    videoResults[videoTaskIndex] = { correct: isCorrect, emotion: analysis.emotion, confidence: analysis.confidence };
+    const frames = await captureCameraFrames(cameraStream);
+    state.textContent = '表情捕捉完成，正在生成识别结果…';
+    const analysis = await api('/api/video/analyze', { method: 'POST', body: JSON.stringify({ taskId: task.id, fileName: task.fileName, target: task.target, frames }) });
+    if (!analysis) throw new Error('摄像头情绪模型未返回结果，请确认模型依赖已安装');
+    const isCorrect = analysis.isCorrect ?? analysis.isMatch ?? analysis.emotion === task.target;
+    const score = analysis.score ?? (isCorrect ? VIDEO_POINTS : 0);
+    videoResults[videoTaskIndex] = { correct: isCorrect, emotion: analysis.emotion, confidence: analysis.confidence, score };
     updateScoreSummary();
-    state.textContent = '本题分析完成，结果已计入最终报告';
+    state.textContent = '本题分析完成，结果已在后台保存。视频会继续循环，点击下一段视频继续。';
     button.disabled = false;
-    button.textContent = videoTaskIndex < videoTasks.length - 1 ? '继续下一题　→' : '视频任务已完成';
+    button.textContent = videoTaskIndex < videoTasks.length - 1 ? '下一段视频　→' : '查看评估结果　→';
     document.getElementById('continue-image').hidden = isImageComplete();
     updateReportAccess();
-    if (videoTaskIndex < videoTasks.length - 1) {
-      videoTaskIndex += 1;
-      window.setTimeout(renderVideoTask, 650);
-      return;
-    }
-    if (isAssessmentComplete()) showScreen('result');
-    else if (!isImageComplete()) state.textContent = '视频任务已完成，请继续完成图片任务。';
   } catch (error) {
-    state.textContent = `后台分析失败：${error.message}`;
+    state.textContent = `表情分析失败：${error.message}`;
     button.disabled = false;
-    button.textContent = '重试后台分析　→';
+    button.textContent = '重新捕捉并评分　→';
   } finally {
-    if (cameraRecorder?.state === 'recording') cameraRecorder.stop();
     cameraRecorder = null;
     cameraChunks = [];
     cameraStream?.getTracks().forEach(track => track.stop());
     cameraStream = null;
+    clearCameraPreview();
   }
 });
 document.getElementById('print-report').addEventListener('click', () => window.print());

@@ -13,13 +13,18 @@ def risk_band(score: float) -> dict:
 
 
 def build_report(session_id: str, image_answers: list[dict], video_answers: list[dict]) -> dict:
-    single_score = sum(answer["points"] for answer in image_answers if answer["type"] == "single" and answer["isCorrect"])
-    multi_score = sum(answer["points"] for answer in image_answers if answer["type"] == "multi" and answer["isCorrect"])
+    image_score = sum(answer["points"] for answer in image_answers if answer["isCorrect"])
     video_score = sum(answer["points"] for answer in video_answers if answer["isCorrect"])
-    overall = single_score + multi_score + video_score
+    overall = image_score + video_score
     band = risk_band(overall)
-    return {"sessionId": session_id, "scores": {"imageSingle": single_score, "imageMulti": multi_score, "video": video_score, "total": overall},
+    image_details = [{"taskId": answer["taskId"], "taskType": answer["type"], "selectedOption": answer["optionId"],
+                      "isCorrect": answer["isCorrect"], "score": answer["points"] if answer["isCorrect"] else 0,
+                      "maxScore": answer["points"]} for answer in image_answers]
+    video_details = [{"taskId": answer["taskId"], "target": answer.get("target"), "capturedEmotion": answer["emotion"],
+                      "isMatch": answer["isCorrect"], "score": answer["points"] if answer["isCorrect"] else 0,
+                      "maxScore": 4} for answer in video_answers]
+    return {"sessionId": session_id, "scores": {"image": image_score, "video": video_score, "total": overall},
             "overall": overall, "total": 30, "risk": band, "conclusion": band["label"],
-            "insights": [{"title": "二选一图像分类", "detail": f"{single_score} / 8 分"},
-                         {"title": "三选一图像识别", "detail": f"{multi_score} / 12 分"},
-                         {"title": "视频表情任务", "detail": f"{video_score} / 10 分"}]}
+            "insights": [{"title": "图片情绪识别", "detail": f"{image_score} / 18 分"},
+                         {"title": "视频表情任务", "detail": f"{video_score} / 12 分"}],
+            "details": {"images": image_details, "videos": video_details}}

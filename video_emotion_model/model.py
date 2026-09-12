@@ -89,6 +89,29 @@ class CameraEmotionAnalyzer:
         label, probability = max(scores.items(), key=lambda pair: pair[1])
         return normalize_emotion(label), float(probability) / 100.0
 
+    def aggregate_frames(self, frames: list[Any], target_emotion: str | None = None) -> EmotionResult:
+        """Classify supplied camera frames and compare the dominant result to a target."""
+        labels: list[str] = []
+        confidences: list[float] = []
+        for frame in frames:
+            label, confidence = self.analyze_frame(frame)
+            if label != "未识别":
+                labels.append(label)
+                confidences.append(confidence)
+        if not labels:
+            raise RuntimeError("采集画面中未检测到可用的人脸表情")
+        counts = Counter(labels)
+        emotion = counts.most_common(1)[0][0]
+        target = normalize_emotion(target_emotion) if target_emotion else None
+        return EmotionResult(
+            emotion=emotion,
+            confidence=sum(confidences) / len(confidences),
+            frames_analyzed=len(labels),
+            target_emotion=target,
+            is_match=emotion == target if target else None,
+            emotion_counts=dict(counts),
+        )
+
     def analyze_camera(
         self,
         target_emotion: str | None = None,
@@ -131,13 +154,6 @@ class CameraEmotionAnalyzer:
         if not labels:
             raise RuntimeError("窗口内未检测到可用的人脸表情")
         counts = Counter(labels)
-        emotion, count = counts.most_common(1)[0]
+        emotion = counts.most_common(1)[0][0]
         target = normalize_emotion(target_emotion) if target_emotion else None
-        return EmotionResult(
-            emotion=emotion,
-            confidence=sum(confidences) / len(confidences),
-            frames_analyzed=len(labels),
-            target_emotion=target,
-            is_match=emotion == target if target else None,
-            emotion_counts=dict(counts),
-        )
+        return EmotionResult(emotion, sum(confidences) / len(confidences), len(labels), target, emotion == target if target else None, dict(counts))

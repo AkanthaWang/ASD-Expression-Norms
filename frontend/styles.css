@@ -388,6 +388,7 @@ body{background:linear-gradient(140deg,#eaf8ff 0%,#f9fdff 55%,#fff8e8 100%);colo
 .image-candidates.multi{grid-template-columns:repeat(2,minmax(0,1fr))}
 .image-candidate{position:relative;padding:0;border:2px solid #dce9f1;border-radius:12px;background:#fff;overflow:hidden;cursor:pointer;transition:border-color .18s,box-shadow .18s,transform .18s}
 .image-candidate img{display:block;width:100%;aspect-ratio:4 / 3;object-fit:cover}
+.image-candidate.image-load-error::before{content:'图片暂时无法加载';display:grid;place-items:center;width:100%;aspect-ratio:4 / 3;background:#eef5f8;color:#628096;font-size:14px}
 .image-candidate span{position:absolute;left:8px;top:8px;width:25px;height:25px;display:grid;place-items:center;border-radius:8px;background:#ffffffdd;color:#1c6494;font-weight:900;font-size:12px}
 .image-candidate:hover{transform:translateY(-2px);border-color:#62b4e7;box-shadow:0 8px 16px rgba(28,99,148,.14)}
 .image-candidate.selected{border-color:#f6a72c;box-shadow:0 0 0 3px #ffd98266}
@@ -413,6 +414,7 @@ body{background:linear-gradient(140deg,#eaf8ff 0%,#f9fdff 55%,#fff8e8 100%);colo
 @media(max-width:620px){.camera-box{height:190px}.task-video-box{height:260px}}
 .score-breakdown{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:16px 0}.score-breakdown div{padding:12px;border:1px solid #dceaf2;border-radius:10px;background:#f8fcff}.score-breakdown span,.score-breakdown b{display:block}.score-breakdown span{font-size:10px;color:#7290a8}.score-breakdown b{margin-top:5px;font-size:16px;color:#17699f}.report-score-row strong + small{display:block;margin-top:5px;color:#7895ac;font-size:10px}@media(max-width:620px){.score-breakdown{grid-template-columns:repeat(2,1fr)}}
 .image-task-layout{display:block;max-width:760px;margin:24px auto}.image-choice-panel{padding:0;background:transparent}.image-choice-panel .stimulus-meta{padding-top:0}.image-choice-panel h3{font-size:22px;margin:8px 0 6px}.image-choice-panel .answer-hint{margin-bottom:18px}.image-choice-panel .image-candidates{max-width:700px}.image-choice-panel .confirm-btn{max-width:700px}.image-choice-panel .image-feedback{max-width:700px}.emotion-options[hidden]{display:none!important}
+.image-source-note{margin:-12px 0 18px;color:#7b98aa;font-size:11px;line-height:1.4}
 @media(max-width:620px){.image-task-layout{margin:16px auto}.image-choice-panel h3{font-size:19px}.image-candidates.multi{grid-template-columns:repeat(2,minmax(0,1fr))}}
 /* Image task viewport fit */
 #screen-image .screen-title .step{display:flex;align-items:center;gap:8px;min-width:auto;color:#6b89a6}
@@ -429,8 +431,9 @@ body{background:linear-gradient(140deg,#eaf8ff 0%,#f9fdff 55%,#fff8e8 100%);colo
 #screen-image .screen-title .step,#screen-video .screen-title .step{display:none!important}
 
 /* Detail workspace: a calm, focused environment for the assessment flow. */
-html{height:auto;min-height:100%}
-body{min-height:100%;height:auto;overflow-x:hidden;overflow-y:auto;background:#f4f7fb}
+/* The document owns scrolling on long task and report pages. */
+html{height:auto;min-height:100%;overflow-x:hidden;overflow-y:auto}
+body{min-height:100%;height:auto;overflow:visible;background:#f4f7fb}
 .app-wrap{width:100%;height:auto!important;min-height:100vh!important;overflow:visible;background:transparent;box-shadow:none}
 body.is-home{height:100vh;overflow:hidden}
 body.is-home .app-wrap{height:100vh!important;overflow:hidden}
@@ -472,15 +475,17 @@ body.is-home .app-wrap{height:100vh!important;overflow:hidden}
 #screen-image .image-feedback{max-width:none;min-height:20px;margin:13px 0 0;padding-left:2px;color:#6c899e;font-size:12px}
 
 /* Video task */
-#screen-video .video-task-layout{max-width:920px;margin:0 auto;display:block}
+#screen-video .video-task-layout{max-width:780px;margin:0 auto;display:block}
 #screen-video .task-video-box{height:auto;aspect-ratio:16/10;border:1px solid #284f70;border-radius:14px;box-shadow:0 16px 32px rgba(21,56,84,.20)}
-.task-video-box .video-label{top:14px;left:14px;right:14px;padding:8px 10px;border-radius:8px;background:rgba(11,40,62,.68);font-size:12px;line-height:1.4}
-#screen-video .video-analysis-panel{margin-top:18px;padding:20px;border:1px solid #d9e8f1;border-radius:14px;background:#fff;box-shadow:0 13px 28px rgba(41,89,124,.09)}
+.task-video-box .video-label{top:14px;left:14px;right:14px;padding:8px 10px;border-radius:8px;background:rgba(11,40,62,.68);font-size:12px;line-height:1.4;pointer-events:none;opacity:0;transform:translateY(-4px);transition:opacity .35s ease,transform .35s ease}
+.task-video-box .video-label.is-visible{opacity:1;transform:translateY(0)}
+#screen-video .video-action-bar{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:14px;align-items:center;margin:16px 0;padding:14px 16px;border:1px solid #d9e8f1;border-radius:14px;background:#fff;box-shadow:0 13px 28px rgba(41,89,124,.09)}
+#screen-video .video-action-bar .analysis-state{min-height:34px;margin:0;padding:8px 10px;border-radius:8px;background:#f2f8fc;color:#52748e;font-size:12px;line-height:1.45}
+#screen-video .video-action-bar .confirm-btn{min-width:218px;min-height:48px;margin:0;border-radius:9px;background:#168dc7;font-size:13px;white-space:nowrap}
+#screen-video .video-action-bar .confirm-btn:hover{background:#0c78b0}
+#screen-video .video-analysis-panel{margin-top:0;padding:20px;border:1px solid #d9e8f1;border-radius:14px;background:#fff;box-shadow:0 13px 28px rgba(41,89,124,.09)}
 #screen-video .camera-box{height:auto;aspect-ratio:4/3;margin-bottom:16px;border-radius:10px;border:1px solid #d4e6ef}
-#screen-video .analysis-state{min-height:34px;margin:0 0 9px;padding:8px 10px;border-radius:8px;background:#f2f8fc;color:#52748e;font-size:12px}
 #screen-video .camera-consent{margin:0 0 17px;color:#718ca1;font-size:12px}
-#screen-video .video-analysis-panel .confirm-btn{min-height:48px;margin:0;border-radius:9px;background:#168dc7;font-size:13px}
-#screen-video .video-analysis-panel .confirm-btn:hover{background:#0c78b0}
 #screen-video .video-result{margin-top:18px;padding-top:17px;border-top-color:#dce9f0}
 #screen-video .video-result-head{margin-bottom:16px;padding:12px;border-radius:9px;background:#f0f9fc}
 #screen-video .video-result-head strong{color:#1975a8;font-size:27px}
@@ -537,6 +542,13 @@ body.is-home .app-wrap{height:100vh!important;overflow:hidden}
 #screen-report .report-score-row strong{font-size:40px}
 #screen-report .report-text{padding:17px 18px;border:1px solid #e2edf3;border-radius:10px;background:#f8fbfd;color:#607e95;font-size:13px;line-height:1.9}
 #screen-report .report-footer{margin-top:24px;padding-top:16px;color:#8ca1b0;font-size:11px}
+.report-detail-intro{margin:-3px 0 13px;color:#668399;font-size:12px;line-height:1.65}
+.report-itemized-scores{display:grid;gap:14px}
+.report-itemized-scores section{padding:15px;border:1px solid #dce9f0;border-radius:10px;background:#fbfdfe}
+.report-itemized-scores h4{margin:0 0 8px;color:#276e99;font-size:13px}
+.report-itemized-scores ul{display:grid;gap:0;margin:0;padding:0;list-style:none}
+.report-itemized-scores li{display:grid;grid-template-columns:minmax(150px,1fr) minmax(130px,1fr) auto;gap:12px;align-items:center;padding:10px 0;border-top:1px solid #e7eff4;color:#668198;font-size:12px;line-height:1.45}
+.report-itemized-scores li:first-child{border-top:0}.report-itemized-scores .score-item-title{color:#315b76;font-weight:800}.report-itemized-scores b{color:#1975a8;white-space:nowrap}
 
 @media(max-width:760px){
   .screen:not(#screen-home){padding:27px 18px 42px}
@@ -550,6 +562,8 @@ body.is-home .app-wrap{height:100vh!important;overflow:hidden}
   .image-choice-panel h3{font-size:20px}
   #screen-image .image-candidates.multi{grid-template-columns:repeat(2,minmax(0,1fr))}
   #screen-video .video-task-layout{max-width:none}
+  #screen-video .video-action-bar{grid-template-columns:1fr;gap:10px;padding:13px}
+  #screen-video .video-action-bar .confirm-btn{width:100%}
   #screen-result .result-layout{grid-template-columns:1fr}
   #screen-result .result-nav{display:flex;align-items:center;gap:2px;padding:8px;overflow:auto;border-right:0;border-bottom:1px solid #dbe9f1}
   #screen-result .result-bot{display:none}
@@ -560,6 +574,7 @@ body.is-home .app-wrap{height:100vh!important;overflow:hidden}
   #screen-report .report-paper{padding:25px 21px}
   #screen-report .report-heading h1{font-size:22px}
   #screen-report .report-info{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .report-itemized-scores li{grid-template-columns:1fr auto;gap:5px 10px}.report-itemized-scores li span:nth-child(2){grid-column:1 / -1}
 }
 @media(max-width:480px){
   .screen-title .step{display:none!important}
@@ -617,3 +632,17 @@ body.is-home .app-wrap{height:100vh!important;overflow:hidden}
 .screening-guidance b,.screening-guidance strong{display:block}.screening-guidance b{color:#2a719d;font-size:12px}.screening-guidance strong{margin-top:4px;color:#294f6d;font-size:14px}.screening-guidance p{margin:7px 0 0;color:#678298;font-size:12px;line-height:1.7}
 .report-disclaimer{margin:18px 0 0;padding:11px 13px;border-left:3px solid #e6a22a;background:#fff9eb;color:#716546;font-size:12px;line-height:1.65}
 @media(max-width:480px){.score-rules{grid-template-columns:1fr;gap:5px}.score-rules b{margin-bottom:8px;white-space:normal}}
+
+/* Square image choices retain the entire source image without cropping. */
+#screen-image .image-candidate{aspect-ratio:1 / 1;display:block;min-width:0;min-height:0}
+/* Position against the button's definite box so intrinsic image dimensions
+   cannot enlarge an implicit grid row and get clipped by overflow:hidden. */
+#screen-image .image-candidate img,#screen-image .image-candidates.single .image-candidate img{position:absolute;inset:0;display:block;width:100%;height:100%;min-width:0;min-height:0;max-width:100%;max-height:100%;aspect-ratio:auto;object-fit:contain;object-position:center}
+
+/* Desktop task fit: show the complete source image and keep the controls in view. */
+@media(min-width:761px){
+  #screen-image .image-task-layout{max-width:980px;margin:16px auto}
+  #screen-image .image-candidates.single{gap:14px}
+  #screen-image .image-candidate{height:clamp(220px,30vh,300px);aspect-ratio:auto}
+  #screen-image .image-task-actions{margin-top:16px}
+}

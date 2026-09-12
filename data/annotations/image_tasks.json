@@ -1,26 +1,22 @@
 {
-  "version": "demo-2.1",
-  "total": 16,
+  "version": "image-sequence-3.0",
+  "total": 12,
   "groups": {
-    "single": {"count": 8, "pointsEach": 1, "pointsTotal": 8},
-    "multi": {"count": 8, "optionsEach": 3, "pointsEach": 1.5, "pointsTotal": 12}
+    "single": {"count": 6, "optionsEach": 2, "pointsEach": 1, "pointsTotal": 6},
+    "multi": {"count": 6, "optionsEach": 3, "pointsEach": 2, "pointsTotal": 12}
   },
   "tasks": [
-    {"id":"image-single-1","mode":"single","target":"开心","correctOption":"A","imageFiles":["q01-a-happy.jpg","q01-b-sad.jpg"]},
-    {"id":"image-single-2","mode":"single","target":"悲伤","correctOption":"B","imageFiles":["q02-a-sad.jpg","q02-b-fear.jpg"]},
-    {"id":"image-single-3","mode":"single","target":"恐惧","correctOption":"A","imageFiles":["q03-a-fear.jpg","q03-b-happy.jpg"]},
-    {"id":"image-single-4","mode":"single","target":"开心","correctOption":"B","imageFiles":["q04-a-happy.jpg","q04-b-fear.png"]},
-    {"id":"image-single-5","mode":"single","target":"悲伤","correctOption":"A","imageFiles":["q05-a-sad.jpg","q05-b-happy.jpg"]},
-    {"id":"image-single-6","mode":"single","target":"恐惧","correctOption":"B","imageFiles":["q06-a-fear.jpg","q06-b-sad.jpg"]},
-    {"id":"image-single-7","mode":"single","target":"开心","correctOption":"A","imageFiles":["q07-a-happy.jpg","q07-b-fear.jpg"]},
-    {"id":"image-single-8","mode":"single","target":"悲伤","correctOption":"B","imageFiles":["q08-a-sad.png","q08-b-happy.jpg"]},
-    {"id":"image-multi-1","mode":"multi","target":"开心","correctOption":"A","imageFiles":["q09-a-happy.jpg","q09-b-sad.png","q09-c-fear.png"]},
-    {"id":"image-multi-2","mode":"multi","target":"悲伤","correctOption":"B","imageFiles":["q10-a-sad.png","q10-b-fear.jpg","q10-c-happy.jpg"]},
-    {"id":"image-multi-3","mode":"multi","target":"恐惧","correctOption":"C","imageFiles":["q11-a-fear.jpg","q11-b-happy.jpg","q11-c-sad.jpg"]},
-    {"id":"image-multi-4","mode":"multi","target":"开心","correctOption":"A","imageFiles":["q12-a-happy.jpg","q12-b-sad.jpg","q12-c-fear.jpg"]},
-    {"id":"image-multi-5","mode":"multi","target":"悲伤","correctOption":"B","imageFiles":["q13-a-sad.jpg","q13-b-fear.jpg","q13-c-happy.jpg"]},
-    {"id":"image-multi-6","mode":"multi","target":"恐惧","correctOption":"C","imageFiles":["q14-a-fear.jpg","q14-b-happy.jpg","q14-c-sad.jpg"]},
-    {"id":"image-multi-7","mode":"multi","target":"开心","correctOption":"A","imageFiles":["q15-a-happy.jpg","q15-b-sad.jpg","q15-c-fear.jpg"]},
-    {"id":"image-multi-8","mode":"multi","target":"悲伤","correctOption":"B","imageFiles":["q16-a-sad.jpg","q16-b-fear.jpg","q16-c-happy.jpg"]}
+    {"id":"image-single-1","mode":"single","target":"开心","correctOption":"A","imageFiles":["happy1.jpg","sad1.jpg"]},
+    {"id":"image-single-2","mode":"single","target":"悲伤","correctOption":"B","imageFiles":["happy2.jpg","sad2.jpg"]},
+    {"id":"image-single-3","mode":"single","target":"恐惧","correctOption":"A","imageFiles":["fear1.jpg","happy3.jpg"]},
+    {"id":"image-single-4","mode":"single","target":"开心","correctOption":"B","imageFiles":["sad3.jpg","happy4.jpg"]},
+    {"id":"image-single-5","mode":"single","target":"恐惧","correctOption":"B","imageFiles":["happy5.jpg","fear2.jpg"]},
+    {"id":"image-single-6","mode":"single","target":"悲伤","correctOption":"B","imageFiles":["happy6.jpg","sad4.jpg"]},
+    {"id":"image-multi-1","mode":"multi","target":"恐惧","correctOption":"C","imageFiles":["happy7.jpg","sad5.jpg","fear3.jpg"]},
+    {"id":"image-multi-2","mode":"multi","target":"悲伤","correctOption":"B","imageFiles":["happy8.jpg","sad6.jpg","happy9.jpg"]},
+    {"id":"image-multi-3","mode":"multi","target":"开心","correctOption":"A","imageFiles":["happy10.jpg","sad7.jpg","sad8.jpg"]},
+    {"id":"image-multi-4","mode":"multi","target":"悲伤","correctOption":"B","imageFiles":["happy11.jpg","sad9.jpg","happy12.jpg"]},
+    {"id":"image-multi-5","mode":"multi","target":"开心","correctOption":"A","imageFiles":["happy13.jpg","sad10.jpg","sad11.jpg"]},
+    {"id":"image-multi-6","mode":"multi","target":"悲伤","correctOption":"B","imageFiles":["happy14.jpg","sad12.jpg","happy15.jpg"]}
   ]
 }

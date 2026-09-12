@@ -23,11 +23,13 @@ python run.py
 | GET | `/api/tasks/image` | 获取图像识别题目及候选图片 |
 | POST | `/api/answers/image` | 提交图像选项，返回正确性、得分和反馈 |
 | GET | `/api/video/sample` | 获取示例视频模型分析结果 |
-| POST | `/api/video/analyze` | 提交视频元信息，返回模型分析结果（当前为演示模型占位） |
+| POST | `/api/video/analyze` | 提交浏览器摄像头采集的面部帧，返回 DeepFace 实时表情分析、匹配结果与本题得分 |
 | GET | `/api/report` | 获取综合评分、结论和线索 |
 | POST | `/api/session/reset` | 重置当前演示会话 |
 
 接口返回 JSON，并允许跨域请求。Node.js 的 `server.js` 与 Python 的 `run.py` / `src/api_server.py` 使用相同接口路径，前端无需切换配置。当前状态保存在内存中，重启后会清空。
+
+视频任务共 3 题。当前视频会持续循环，直到测试者点击下一段视频；每题采集约 6 秒摄像头画面，模型识别出的主导表情与目标一致记 3 分，不一致记 0 分。摄像头帧只在内存中用于本次分析，不写入项目文件。
 
 ## 目录结构
 

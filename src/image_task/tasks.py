@@ -5,31 +5,27 @@ from __future__ import annotations
 EMOTION_LABELS = {"happy": "开心", "sad": "悲伤", "fear": "恐惧"}
 
 SINGLE_SPECS = [
-    ("开心", "下面哪张图片是开心的？", ["q01-a-happy.jpg", "q01-b-sad.jpg"]),
-    ("悲伤", "下面哪张图片更能体现悲伤情绪？", ["q02-a-sad.jpg", "q02-b-fear.jpg"]),
-    ("恐惧", "下面哪张图片更能体现恐惧情绪？", ["q03-a-fear.jpg", "q03-b-happy.jpg"]),
-    ("开心", "下面哪张图片更能体现开心情绪？", ["q04-a-happy.jpg", "q04-b-fear.png"]),
-    ("悲伤", "哪一张图片表现出悲伤情绪？", ["q05-a-sad.jpg", "q05-b-happy.jpg"]),
-    ("恐惧", "哪一张图片表现出恐惧情绪？", ["q06-a-fear.jpg", "q06-b-sad.jpg"]),
-    ("开心", "哪一张图片中的人物正在微笑？", ["q07-a-happy.jpg", "q07-b-fear.jpg"]),
-    ("悲伤", "哪一张图片表现出低落情绪？", ["q08-a-sad.png", "q08-b-happy.jpg"]),
+    ("开心", "下面哪张图片是开心的？", ["happy1.jpg", "sad1.jpg"]),
+    ("悲伤", "下面哪张图片更能体现悲伤情绪？", ["happy2.jpg", "sad2.jpg"]),
+    ("恐惧", "下面哪张图片更能体现恐惧情绪？", ["fear1.jpg", "happy3.jpg"]),
+    ("开心", "下面哪张图片更能体现开心情绪？", ["sad3.jpg", "happy4.jpg"]),
+    ("恐惧", "哪一张图片表现出恐惧情绪？", ["happy5.jpg", "fear2.jpg"]),
+    ("悲伤", "哪一张图片表现出悲伤情绪？", ["happy6.jpg", "sad4.jpg"]),
 ]
 
 MULTI_SPECS = [
-    ("开心", "在这 3 张图片中，哪一张表达了快乐？", ["q09-a-happy.jpg", "q09-b-sad.png", "q09-c-fear.png"]),
-    ("悲伤", "在这 3 张图片中，哪一张表达了悲伤？", ["q10-a-sad.png", "q10-b-fear.jpg", "q10-c-happy.jpg"]),
-    ("恐惧", "在这 3 张图片中，哪一张表达了恐惧？", ["q11-a-fear.jpg", "q11-b-happy.jpg", "q11-c-sad.jpg"]),
-    ("开心", "从 3 张图片中找出自然微笑的表情。", ["q12-a-happy.jpg", "q12-b-sad.jpg", "q12-c-fear.jpg"]),
-    ("悲伤", "从 3 张图片中找出悲伤的表情。", ["q13-a-sad.jpg", "q13-b-fear.jpg", "q13-c-happy.jpg"]),
-    ("恐惧", "从 3 张图片中找出恐惧的表情。", ["q14-a-fear.jpg", "q14-b-happy.jpg", "q14-c-sad.jpg"]),
-    ("开心", "从 3 张图片中找出自然微笑的表情。", ["q15-a-happy.jpg", "q15-b-sad.jpg", "q15-c-fear.jpg"]),
-    ("悲伤", "从 3 张图片中找出悲伤的表情。", ["q16-a-sad.jpg", "q16-b-fear.jpg", "q16-c-happy.jpg"]),
+    ("恐惧", "在这 3 张图片中，哪一张表达了恐惧？", ["happy7.jpg", "sad5.jpg", "fear3.jpg"]),
+    ("悲伤", "在这 3 张图片中，哪一张表达了悲伤？", ["happy8.jpg", "sad6.jpg", "happy9.jpg"]),
+    ("开心", "从 3 张图片中找出自然微笑的表情。", ["happy10.jpg", "sad7.jpg", "sad8.jpg"]),
+    ("悲伤", "在这 3 张图片中，哪一张表达了悲伤？", ["happy11.jpg", "sad9.jpg", "happy12.jpg"]),
+    ("开心", "从 3 张图片中找出自然微笑的表情。", ["happy13.jpg", "sad10.jpg", "sad11.jpg"]),
+    ("悲伤", "在这 3 张图片中，哪一张表达了悲伤？", ["happy14.jpg", "sad12.jpg", "happy15.jpg"]),
 ]
 
 
 def _emotion_from_file(filename: str) -> str:
     for key, label in EMOTION_LABELS.items():
-        if f"-{key}." in filename:
+        if filename.startswith(key) and filename[len(key):].split(".", 1)[0].isdigit():
             return label
     raise ValueError(f"unknown image emotion: {filename}")
 
@@ -54,10 +50,8 @@ def _build_tasks(specs: list[tuple[str, str, list[str]]], mode: str, points: flo
     tasks = []
     for index, (target, prompt, filenames) in enumerate(specs):
         target_file = next(filename for filename in filenames if _emotion_from_file(filename) == target)
-        distractors = [filename for filename in filenames if filename != target_file]
-        correct_index = index % len(filenames)
-        ordered_files = distractors[:correct_index] + [target_file] + distractors[correct_index:]
-        options = _options(ordered_files)
+        correct_index = filenames.index(target_file)
+        options = _options(filenames)
         correct = chr(65 + correct_index)
         task_number = index + 1
         tasks.append({
@@ -75,7 +69,7 @@ def _build_tasks(specs: list[tuple[str, str, list[str]]], mode: str, points: flo
     return tasks
 
 
-IMAGE_TASKS = _build_tasks(SINGLE_SPECS, "single", 1) + _build_tasks(MULTI_SPECS, "multi", 1.5)
+IMAGE_TASKS = _build_tasks(SINGLE_SPECS, "single", 3)
 IMAGE_TASK = IMAGE_TASKS[0]
 
 
