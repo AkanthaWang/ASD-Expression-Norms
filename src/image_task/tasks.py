@@ -8,18 +8,18 @@ SINGLE_SPECS = [
     ("开心", "下面哪张图片是开心的？", ["happy1.jpg", "sad1.jpg"]),
     ("悲伤", "下面哪张图片更能体现悲伤情绪？", ["happy2.jpg", "sad2.jpg"]),
     ("恐惧", "下面哪张图片更能体现恐惧情绪？", ["fear1.jpg", "happy3.jpg"]),
-    ("开心", "下面哪张图片更能体现开心情绪？", ["sad3.jpg", "happy4.jpg"]),
+    ("悲伤", "哪一张图片表现出悲伤情绪？", ["sad3.jpg", "happy4.jpg"]),
     ("恐惧", "哪一张图片表现出恐惧情绪？", ["happy5.jpg", "fear2.jpg"]),
-    ("悲伤", "哪一张图片表现出悲伤情绪？", ["happy6.jpg", "sad4.jpg"]),
+    ("悲伤", "哪一张图片表现出低落情绪？", ["happy6.jpg", "sad4.jpg"]),
 ]
 
 MULTI_SPECS = [
-    ("恐惧", "在这 3 张图片中，哪一张表达了恐惧？", ["happy7.jpg", "sad5.jpg", "fear3.jpg"]),
+    ("开心", "在这 3 张图片中，哪一张表达了快乐？", ["happy7.jpg", "sad5.jpg", "fear3.jpg"]),
     ("悲伤", "在这 3 张图片中，哪一张表达了悲伤？", ["happy8.jpg", "sad6.jpg", "happy9.jpg"]),
     ("开心", "从 3 张图片中找出自然微笑的表情。", ["happy10.jpg", "sad7.jpg", "sad8.jpg"]),
-    ("悲伤", "在这 3 张图片中，哪一张表达了悲伤？", ["happy11.jpg", "sad9.jpg", "happy12.jpg"]),
+    ("悲伤", "从 3 张图片中找出悲伤的表情。", ["happy11.jpg", "sad9.jpg", "happy12.jpg"]),
     ("开心", "从 3 张图片中找出自然微笑的表情。", ["happy13.jpg", "sad10.jpg", "sad11.jpg"]),
-    ("悲伤", "在这 3 张图片中，哪一张表达了悲伤？", ["happy14.jpg", "sad12.jpg", "happy15.jpg"]),
+    ("悲伤", "从 3 张图片中找出悲伤的表情。", ["happy14.jpg", "sad12.jpg", "happy15.jpg"]),
 ]
 
 
@@ -69,7 +69,10 @@ def _build_tasks(specs: list[tuple[str, str, list[str]]], mode: str, points: flo
     return tasks
 
 
-IMAGE_TASKS = _build_tasks(SINGLE_SPECS, "single", 3)
+IMAGE_TASKS = (
+    _build_tasks(SINGLE_SPECS, "single", 1)
+    + _build_tasks(MULTI_SPECS, "multi", 2)
+)
 IMAGE_TASK = IMAGE_TASKS[0]
 
 

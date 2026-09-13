@@ -13,9 +13,10 @@ const VIDEO_FILES = {
   'sad-1.mp4': path.join(ROOT, 'data', 'videos', 'sad', 'sad_1.mp4'),
   'fear-1.mp4': path.join(ROOT, 'data', 'videos', 'fear', 'fear_1.mp4'),
 };
-const IMAGE_TASK_COUNT = 6;
+const IMAGE_TASK_COUNT = 12;
 const VIDEO_TASK_COUNT = 3;
-const IMAGE_POINTS = 3;
+const SINGLE_IMAGE_POINTS = 1;
+const MULTI_IMAGE_POINTS = 2;
 const VIDEO_POINTS = 4;
 const VIDEO_TASKS = {
   'video-q1': { fileName: 'happy-1.mp4', target: '开心' },
@@ -38,17 +39,17 @@ const singleSpecs = [
   ['开心', '下面哪张图片是开心的？', ['happy1.jpg', 'sad1.jpg']],
   ['悲伤', '下面哪张图片更能体现悲伤情绪？', ['happy2.jpg', 'sad2.jpg']],
   ['恐惧', '下面哪张图片更能体现恐惧情绪？', ['fear1.jpg', 'happy3.jpg']],
-  ['开心', '下面哪张图片更能体现开心情绪？', ['sad3.jpg', 'happy4.jpg']],
+  ['悲伤', '哪一张图片表现出悲伤情绪？', ['sad3.jpg', 'happy4.jpg']],
   ['恐惧', '哪一张图片表现出恐惧情绪？', ['happy5.jpg', 'fear2.jpg']],
-  ['悲伤', '哪一张图片表现出悲伤情绪？', ['happy6.jpg', 'sad4.jpg']],
+  ['悲伤', '哪一张图片表现出低落情绪？', ['happy6.jpg', 'sad4.jpg']],
 ];
 const multiSpecs = [
-  ['恐惧', '在这 3 张图片中，哪一张表达了恐惧？', ['happy7.jpg', 'sad5.jpg', 'fear3.jpg']],
+  ['开心', '在这 3 张图片中，哪一张表达了快乐？', ['happy7.jpg', 'sad5.jpg', 'fear3.jpg']],
   ['悲伤', '在这 3 张图片中，哪一张表达了悲伤？', ['happy8.jpg', 'sad6.jpg', 'happy9.jpg']],
   ['开心', '从 3 张图片中找出自然微笑的表情。', ['happy10.jpg', 'sad7.jpg', 'sad8.jpg']],
-  ['悲伤', '在这 3 张图片中，哪一张表达了悲伤？', ['happy11.jpg', 'sad9.jpg', 'happy12.jpg']],
+  ['悲伤', '从 3 张图片中找出悲伤的表情。', ['happy11.jpg', 'sad9.jpg', 'happy12.jpg']],
   ['开心', '从 3 张图片中找出自然微笑的表情。', ['happy13.jpg', 'sad10.jpg', 'sad11.jpg']],
-  ['悲伤', '在这 3 张图片中，哪一张表达了悲伤？', ['happy14.jpg', 'sad12.jpg', 'happy15.jpg']],
+  ['悲伤', '从 3 张图片中找出悲伤的表情。', ['happy14.jpg', 'sad12.jpg', 'happy15.jpg']],
 ];
 function emotionFromFile(fileName) {
   if (/^happy\d+\./.test(fileName)) return '开心';
@@ -69,7 +70,8 @@ function buildImageTask([emotion, prompt, files], index, mode, points) {
   return { id: `image-${mode}-${index + 1}`, type: mode === 'single' ? 'single-choice' : 'multi-choice', mode, points, emotion, target: emotion, prompt, reason: '重点观察眼睛、眉毛、嘴角和整体面部张力。', correctOption: String.fromCharCode(65 + correctIndex), options };
 }
 const imageTasks = [
-  ...singleSpecs.map((spec, index) => buildImageTask(spec, index, 'single', IMAGE_POINTS)),
+  ...singleSpecs.map((spec, index) => buildImageTask(spec, index, 'single', SINGLE_IMAGE_POINTS)),
+  ...multiSpecs.map((spec, index) => buildImageTask(spec, index, 'multi', MULTI_IMAGE_POINTS)),
 ];
 
 function videoAnalysis(task = VIDEO_TASKS['video-q1']) {
@@ -190,7 +192,7 @@ async function handleApi(req, res, url) {
       const task = imageTasks.find(item => item.id === taskId);
       if (!task || !task.options.some(option => option.id === body.optionId)) return sendJson(res, 400, { error: 'invalid image task or option' });
       const type = task.mode;
-      const points = IMAGE_POINTS;
+      const points = task.points;
       const isCorrect = body.optionId === task.correctOption;
       const answer = { taskId, type, optionId: body.optionId, isCorrect, points, answeredAt: new Date().toISOString() };
       upsertAnswer(state.imageAnswers, answer);

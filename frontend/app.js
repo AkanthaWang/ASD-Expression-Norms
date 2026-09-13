@@ -17,7 +17,8 @@ let cameraStream = null;
 let cameraRecorder = null;
 let cameraChunks = [];
 let videoLabelTimer = null;
-const IMAGE_POINTS = 3;
+const SINGLE_IMAGE_POINTS = 1;
+const MULTI_IMAGE_POINTS = 2;
 const VIDEO_POINTS = 4;
 const VIDEO_CAPTURE_WINDOW_MS = 6000;
 const imageResults = [];
@@ -25,17 +26,17 @@ const singleSpecs = [
   ['开心', '下面哪张图片是开心的？', ['happy1.jpg', 'sad1.jpg']],
   ['悲伤', '下面哪张图片更能体现悲伤情绪？', ['happy2.jpg', 'sad2.jpg']],
   ['恐惧', '下面哪张图片更能体现恐惧情绪？', ['fear1.jpg', 'happy3.jpg']],
-  ['开心', '下面哪张图片更能体现开心情绪？', ['sad3.jpg', 'happy4.jpg']],
+  ['悲伤', '哪一张图片表现出悲伤情绪？', ['sad3.jpg', 'happy4.jpg']],
   ['恐惧', '哪一张图片表现出恐惧情绪？', ['happy5.jpg', 'fear2.jpg']],
-  ['悲伤', '哪一张图片表现出悲伤情绪？', ['happy6.jpg', 'sad4.jpg']],
+  ['悲伤', '哪一张图片表现出低落情绪？', ['happy6.jpg', 'sad4.jpg']],
 ];
 const multiSpecs = [
-  ['恐惧', '在这 3 张图片中，哪一张表达了恐惧？', ['happy7.jpg', 'sad5.jpg', 'fear3.jpg']],
+  ['开心', '在这 3 张图片中，哪一张表达了快乐？', ['happy7.jpg', 'sad5.jpg', 'fear3.jpg']],
   ['悲伤', '在这 3 张图片中，哪一张表达了悲伤？', ['happy8.jpg', 'sad6.jpg', 'happy9.jpg']],
   ['开心', '从 3 张图片中找出自然微笑的表情。', ['happy10.jpg', 'sad7.jpg', 'sad8.jpg']],
-  ['悲伤', '在这 3 张图片中，哪一张表达了悲伤？', ['happy11.jpg', 'sad9.jpg', 'happy12.jpg']],
+  ['悲伤', '从 3 张图片中找出悲伤的表情。', ['happy11.jpg', 'sad9.jpg', 'happy12.jpg']],
   ['开心', '从 3 张图片中找出自然微笑的表情。', ['happy13.jpg', 'sad10.jpg', 'sad11.jpg']],
-  ['悲伤', '在这 3 张图片中，哪一张表达了悲伤？', ['happy14.jpg', 'sad12.jpg', 'happy15.jpg']],
+  ['悲伤', '从 3 张图片中找出悲伤的表情。', ['happy14.jpg', 'sad12.jpg', 'happy15.jpg']],
 ];
 const emotionFromFile = fileName => {
   if (/^happy\d+\./.test(fileName)) return '开心';
@@ -58,7 +59,8 @@ const buildImageTask = ([target, prompt, files], index, mode, points) => ({
   candidates: buildCandidates(files),
 });
 const imageTasks = [
-  ...singleSpecs.map((spec, index) => buildImageTask(spec, index, 'single', IMAGE_POINTS)),
+  ...singleSpecs.map((spec, index) => buildImageTask(spec, index, 'single', SINGLE_IMAGE_POINTS)),
+  ...multiSpecs.map((spec, index) => buildImageTask(spec, index, 'multi', MULTI_IMAGE_POINTS)),
 ];
 const videoTasks = [
   { id: 'video-q1', fileName: 'happy-1.mp4', target: '开心' },
@@ -110,6 +112,18 @@ function updateScoreSummary() {
   renderItemizedScores();
 }
 
+function updateAssessmentCopy() {
+  document.querySelector('#screen-result .screen-title small').textContent = '全部 15 题完成后的总分与筛查参考';
+  document.querySelector('#screen-result .score-rules').innerHTML = [
+    '<span>二选一图像识别</span><b>6 题 × 1 分 = 6 分</b>',
+    '<span>三选一图像识别</span><b>6 题 × 2 分 = 12 分</b>',
+    '<span>视频表情任务</span><b>3 题 × 4 分 = 12 分</b>',
+  ].join('');
+  document.querySelector('#screen-report .screen-title small').textContent = '基于 12 道图片题与 3 段视频的筛查参考结果';
+  document.querySelector('#screen-report .report-info span:last-child').innerHTML = '任务类型：<b>12 图片 + 3 视频</b>';
+  document.querySelector('#screen-report .report-detail-intro').textContent = '图片任务包含 6 道二选一题（每题 1 分）和 6 道三选一题（每题 2 分）；三个视频任务依次使用 happy、sad、fear 文件夹内的标准情绪素材，一致为 4 分，不一致为 0 分。';
+}
+
 function renderItemizedScores() {
   const container = document.getElementById('report-itemized-scores');
   if (!container) return;
@@ -135,8 +149,10 @@ function renderImageTask() {
   document.getElementById('image-progress').textContent = `${imageTaskIndex + 1} / ${imageTasks.length}`;
   document.getElementById('image-progress-fill').style.width = `${((imageTaskIndex + 1) / imageTasks.length) * 100}%`;
   document.getElementById('image-index').textContent = imageTaskIndex + 1;
-  document.getElementById('image-type-label').textContent = '二选一图像识别 · 每题 3 分';
-  document.getElementById('image-hint').textContent = '从 2 张候选图片中选出最符合目标情绪的一张';
+  const optionCount = task.candidates.length;
+  const taskType = optionCount === 2 ? '二选一图像识别' : '三选一图像识别';
+  document.getElementById('image-type-label').textContent = `${taskType} · 每题 ${task.points} 分`;
+  document.getElementById('image-hint').textContent = `从 ${optionCount} 张候选图片中选出最符合目标情绪的一张`;
   document.getElementById('image-prompt').textContent = task.prompt;
   const candidates = document.getElementById('image-candidates');
   candidates.className = `image-candidates ${task.mode}`;
@@ -359,10 +375,12 @@ document.getElementById('print-report').addEventListener('click', () => window.p
 
 async function hydrate() {
   document.body.classList.add('is-home');
+  updateAssessmentCopy();
   renderImageTask();
   renderVideoTask();
   const session = await api('/api/session');
   if (session) document.querySelector('.api-status').innerHTML = `<i></i> 数据已同步 · ${session.completed}/${session.total}`;
+  updateScoreSummary();
   updateReportAccess();
 }
 

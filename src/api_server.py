@@ -17,9 +17,8 @@ ROOT = Path(__file__).resolve().parents[1]
 FRONTEND_ROOT = ROOT / "frontend"
 IMAGE_ROOT = ROOT / "data" / "images"
 PORT = int(os.getenv("PORT", "5173"))
-IMAGE_TASK_COUNT = 6
+IMAGE_TASK_COUNT = len(IMAGE_TASKS)
 VIDEO_TASK_COUNT = 3
-IMAGE_POINTS = 3
 VIDEO_POINTS = 4
 VIDEO_TASKS = {
     "video-q1": {"fileName": "happy-1.mp4", "target": "开心"},
@@ -98,15 +97,15 @@ class Handler(BaseHTTPRequestHandler):
             body = self.read_body()
             if route == "/api/answers/image":
                 task_id = body.get("taskId", "")
-                match = re.fullmatch(r"image-single-[1-6]", task_id)
+                match = re.fullmatch(r"image-(?:single|multi)-[1-6]", task_id)
                 option_id = body.get("optionId")
                 if not match or option_id not in {"A", "B", "C"}:
                     raise ValueError("invalid image task or option")
-                task_type = "single"
-                points = IMAGE_POINTS
                 task = next((item for item in IMAGE_TASKS if item["id"] == task_id), None)
                 if task is None or option_id not in {item["id"] for item in task["options"]}:
                     raise ValueError("invalid image task or option")
+                task_type = task["mode"]
+                points = task["points"]
                 is_correct = option_id == task["correctOption"]
                 answer = {"taskId": task_id, "type": task_type, "optionId": option_id, "isCorrect": is_correct, "points": points,
                           "score": points if is_correct else 0, "answeredAt": "server-time"}
